@@ -9,5 +9,5 @@ type FIOProvider interface {
 // FIOMap maps the FIOProvider to a MountPath
 type FIOMap struct {
        MountPath string
-       Provider *FIOProvider
+       Provider FIOProvider
 }

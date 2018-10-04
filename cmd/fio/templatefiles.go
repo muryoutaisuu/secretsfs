@@ -11,10 +11,10 @@ func (t *FIOTemplatefiles) Read(file string) error {
 }
 
 func init() {
-       provider := FIOMap {
+       fm := FIOMap {
              MountPath: "templatefiles",
              Provider: &FIOTemplatefiles{},
        }
        
-       fio.RegisterProvider(provider)
+       RegisterProvider(&fm)
 }
