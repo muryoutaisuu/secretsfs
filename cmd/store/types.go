@@ -6,4 +6,5 @@ type Store interface {
 	Read(string) error
 	Write(string, string) error
 	Delete(string) error
+	String() (string, error)
 }
