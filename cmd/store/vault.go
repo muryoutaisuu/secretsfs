@@ -10,25 +10,24 @@ import (
 )
 
 
-// Vault FS Interaction things
-
 type Vault struct {
 	client *api.Client
 }
 
-func (v *Vault) List(path string) error {
+func (v *Vault) List(u *user.User, path string) error {
+	return nil
+
+}
+
+func (v *Vault) Read(u *user.User, path string) error {
 	return nil
 }
 
-func (v *Vault) Read(path string) error {
+func (v *Vault) Write(u *user.User, path,content string) error {
 	return nil
 }
 
-func (v *Vault) Write(path,content string) error {
-	return nil
-}
-
-func (v *Vault) Delete(path string) error {
+func (v *Vault) Delete(u *user.User, path string) error {
 	return nil
 }
 
@@ -36,31 +35,20 @@ func (v *Vault) String() (string, error) {
 	return "Vault",nil
 }
 
-
-// authBundle things
-
-// authBundle contains all Tokens of Vault and the user struct
-type authBundle struct{
-	authtoken string
-	acctoken string
-	user *user.User
+func (v *Vault) Client() (*api.Client, error) {
+	return v.client, nil
 }
 
-func (a *authBundle) RenewAccToken() error {
-	return nil
-}
 
-func (a *authBundle) AccToken() (string, error) {
-	return a.acctoken, nil
-}
 
-func AuthBundle(u *user.User) (*authBundle, error) {
-	aut,_ := readAuthToken(u)
-	return &authBundle{
-		authtoken: aut,
-		acctoken: "",
-		user: u,},
-	nil
+
+func (v *Vault) secret(u *user.User) (*api.Secret, error) {
+	authToken,_ := readAuthToken(u)
+	c,_ := v.Client()
+	auth := c.Auth()
+	tokenauth := auth.Token()
+	secret,err := tokenauth.Lookup(authToken)
+	return secret,err
 }
 
 func readAuthToken(u *user.User) (string, error) {
@@ -73,6 +61,7 @@ func readAuthToken(u *user.User) (string, error) {
 	authToken := strings.TrimSuffix(string(o), "\n")
 	return authToken,nil
 }
+
 
 
 
