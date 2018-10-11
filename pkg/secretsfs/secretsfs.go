@@ -28,10 +28,9 @@ type Secretsfs struct {
 	Name string
 }
 
-func NewSecretsfs(files map[string]SFile) *Secretsfs {
+func NewSecretsfs(fms map[string]*FIOMap) *Secretsfs {
 	fs := &Secretsfs{
 		root: &sNode{Node : nodefs.NewDefaultNode()},
-		files: files,
 		Name: "root",
 	}
 	fs.root.fs = fs
@@ -112,6 +111,15 @@ func (n *sNode) GetAttr(out *fuse.Attr, file nodefs.File, context *fuse.Context)
 	n.file.Stat(out)
 	out.Blocks = (out.Size + 511) / 512
 	return fuse.OK
+}
+
+func (n *Secretsfs) addRootChildren(fms map[string]*FIOMap) error {
+	root := n.root.Inode()
+	for k,v := range fms {
+
+		//TODO: implement this iteration
+	root.Inode()
+	return nil
 }
 
 func (n *Secretsfs) addFile(name string, f SFile) {
