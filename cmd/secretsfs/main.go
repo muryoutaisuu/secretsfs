@@ -5,23 +5,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/hanwen/go-fuse/fuse/nodefs"
+	"github.com/hanwen/go-fuse/fuse/pathfs"
+
 	"github.com/Muryoutaisuu/secretsfs/pkg/secretsfs"
-	//"sync/atomic"
-	//"syscall"
-	//"time"
-
-	//"bazil.org/fuse"
-	//"bazil.org/fuse/fs"
-	//_ "bazil.org/fuse/fs/fstestutil"
-	//"bazil.org/fuse/fuseutil"
-	//"golang.org/x/net/context"
-
-	//"github.com/Muryoutaisuu/secretsfs/cmd/store"
 )
 
 func main() {
-  flag.Usage = usage
-		flag.Parse()
+	flag.Usage = usage
+	flag.Parse()
 
 	if flag.NArg() != 1 {
 		usage()
@@ -29,9 +22,12 @@ func main() {
 	}
 	mountpoint := flag.Arg(0)
 
-	if err := secretsfs.Run(mountpoint); err != nil {
-		log.Fatal(err)
+	nfs := pathfs.NewPathNodeFs(&secretsfs.SecretsFS{FileSystem: pathfs.NewDefaultFileSystem()}, nil)
+	server, _, err := nodefs.MountRoot(mountpoint, nfs.Root(), nil)
+	if err != nil {
+		log.Fatalf("Mount fail: %v\n", err)
 	}
+	server.Serve()
 }
 
 func usage() {
