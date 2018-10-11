@@ -7,9 +7,9 @@ import (
 	"os"
 
 	"github.com/hanwen/go-fuse/fuse/nodefs"
-	"github.com/hanwen/go-fuse/fuse/pathfs"
+	//"github.com/hanwen/go-fuse/fuse/pathfs"
 
-	"github.com/Muryoutaisuu/secretsfs/pkg/secretsfs"
+	"github.com/Muryoutaisuu/secretsfs/pkg/fio"
 )
 
 func main() {
@@ -22,11 +22,14 @@ func main() {
 	}
 	mountpoint := flag.Arg(0)
 
-	nfs := pathfs.NewPathNodeFs(&secretsfs.SecretsFS{FileSystem: pathfs.NewDefaultFileSystem()}, nil)
-	server, _, err := nodefs.MountRoot(mountpoint, nfs.Root(), nil)
+	sf := secretsfs.NewSecretsfs()
+	root := sf.Root()
+
+	server, _, err := nodefs.MountRoot(mountpoint, root, nodefs.NewOptions())
 	if err != nil {
 		log.Fatalf("Mount fail: %v\n", err)
 	}
+
 	server.Serve()
 }
 
