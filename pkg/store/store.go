@@ -21,6 +21,6 @@ func init() {
 // RegisterStore registers Stores
 func RegisterStore(s Store) {
 	Linf.Println(s.String())
-  stores = append(stores, s)
+	stores = append(stores, s)
 }
 

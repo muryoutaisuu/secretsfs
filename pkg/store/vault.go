@@ -6,7 +6,7 @@ import (
 	"os/user"
 	"strings"
 
-	api "github.com/hashicorp/vault/api"
+	"github.com/hashicorp/vault/api"
 )
 
 
