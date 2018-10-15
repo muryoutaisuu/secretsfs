@@ -17,6 +17,10 @@ type SFile interface {
 	Data() []byte
 }
 
+type Secret struct {
+	SFile
+}
+
 type sNode struct {
 	nodefs.Node
 	file SFile
@@ -115,9 +119,8 @@ func (n *sNode) GetAttr(out *fuse.Attr, file nodefs.File, context *fuse.Context)
 }
 
 func (n *Secretsfs) addRootChildren(fms map[string]*fio.FIOMap) error {
-	root := n.root.Inode()
-	for k,v := range fms {
-		//TODO: implement this iteration
+	for k := range fms {
+		n.addFile(k,Secret{})
 	}
 	return nil
 }
