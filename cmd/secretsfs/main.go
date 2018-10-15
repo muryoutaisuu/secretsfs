@@ -25,6 +25,7 @@ func main() {
 
 	fms := fio.FIOMaps()
 	sf := secretsfs.NewSecretsfs(fms)
+	//sf := secretsfs.NewSecretsfs()
 	root := sf.Root()
 
 	server, _, err := nodefs.MountRoot(mountpoint, root, nodefs.NewOptions())

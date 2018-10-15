@@ -39,7 +39,11 @@ func NewSecretsfs(fms map[string]*fio.FIOMap) *Secretsfs {
 		Name: "root",
 	}
 	fs.root.fs = fs
-	fs.addRootChildren(fms)
+	fs.files = make(map[string]SFile)
+	for k := range fms {
+		fs.files[k] = Secret{}
+	}
+	//fs.addRootChildren(fms)
 	return fs
 }
 
