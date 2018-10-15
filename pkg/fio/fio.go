@@ -10,6 +10,6 @@ func RegisterProvider(fm *FIOMap) {
 	//fiomaps = append(fiomaps, fm)
 }
 
-func FioMaps() map[string]*FIOMap {
+func FIOMaps() map[string]*FIOMap {
 	return fiomaps
 }
