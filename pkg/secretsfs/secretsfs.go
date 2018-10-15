@@ -3,6 +3,8 @@ package secretsfs
 // after the example: https://github.com/hanwen/go-fuse/blob/master/example/hello/main.go
 
 import (
+	"log"
+
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
@@ -23,6 +25,14 @@ func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap) (*SecretsFS,
 }
 
 func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
+	_,ok := sfs.fms[name]
+	switch ok {
+		case true : {
+			return &fuse.Attr{
+				Mode: fuse.S_IFDIR | 0755,
+			}, fuse.OK
+		}
+	}
 	switch name {
 	case "file.txt":
 		return &fuse.Attr{
@@ -37,6 +47,7 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 			Mode: fuse.S_IFDIR | 0755,
 		}, fuse.OK
 	}
+	log.Fatal(name +" does not exist")
 	return nil, fuse.ENOENT
 }
 
