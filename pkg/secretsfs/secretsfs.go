@@ -9,6 +9,7 @@ import (
 
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
+	"github.com/Muryoutaisuu/secretsfs/pkg/fio"
 )
 
 type SFile interface {
@@ -28,7 +29,7 @@ type Secretsfs struct {
 	Name string
 }
 
-func NewSecretsfs(fms map[string]*FIOMap) *Secretsfs {
+func NewSecretsfs(fms map[string]*fio.FIOMap) *Secretsfs {
 	fs := &Secretsfs{
 		root: &sNode{Node : nodefs.NewDefaultNode()},
 		Name: "root",
@@ -113,16 +114,15 @@ func (n *sNode) GetAttr(out *fuse.Attr, file nodefs.File, context *fuse.Context)
 	return fuse.OK
 }
 
-func (n *Secretsfs) addRootChildren(fms map[string]*FIOMap) error {
+func (n *Secretsfs) addRootChildren(fms map[string]*fio.FIOMap) error {
 	root := n.root.Inode()
 	for k,v := range fms {
-
 		//TODO: implement this iteration
-	root.Inode()
+	}
 	return nil
 }
 
-func (n *Secretsfs) addFile(name string, f SFile) {
+func (n *Secretsfs) addFile(name string, f SFile) error {
 	comps := strings.Split(name, "/")
 
 	node := n.root.Inode()
@@ -141,4 +141,5 @@ func (n *Secretsfs) addFile(name string, f SFile) {
 		}
 		node = child
 	}
+	return nil
 }
