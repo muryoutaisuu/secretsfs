@@ -58,7 +58,7 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	root, subpath := rootName(name)
 	if _,ok := sfs.fms[root]; ok {
-		return sfs.fms[name].Provider.Open(subpath, flags, context)
+		return sfs.fms[root].Provider.Open(subpath, flags, context)
 	}
 	//if name == "" {
 	//	return nil, fuse.EPERM
