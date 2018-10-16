@@ -41,9 +41,9 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 }
 
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
-	if _,ok := sfs.fms[name]; ok {
-		c = []fuse.DirEntry{{Name: "natiitest.txt", Mode: fuse.S_IFREG | 0440}}
-		return c, fuse.OK
+	root, subpath := rootName(name)
+	if _,ok := sfs.fms[root]; ok {
+		return sfs.fms[name].Provider.OpenDir(subpath, context)
 	}
 	if name == "" {
 		c = []fuse.DirEntry{}
@@ -52,12 +52,20 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 		}
 		return c, fuse.OK
 	}
-	return sfs.store.OpenDir(name, context)
+	return nil, fuse.ENOENT
 }
 
 func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
-	return sfs.store.Open(name, flags, context)
+	root, subpath := rootName(name)
+	if _,ok := sfs.fms[root]; ok {
+		return sfs.fms[name].Provider.Open(subpath, flags, context)
+	}
+	//if name == "" {
+	//	return nil, fuse.EPERM
+	//}
+	return nil, fuse.EPERM
 }
+
 
 
 func rootName(path string) (root, subpath string) {
