@@ -10,6 +10,7 @@ import (
 	"github.com/hanwen/go-fuse/fuse/pathfs"
 
 	"github.com/Muryoutaisuu/secretsfs/pkg/fio"
+	"github.com/Muryoutaisuu/secretsfs/pkg/store"
 	"github.com/Muryoutaisuu/secretsfs/pkg/secretsfs"
 )
 
@@ -23,7 +24,7 @@ func main() {
 	}
 	mountpoint := flag.Arg(0)
 
-	sfs,_ := secretsfs.NewSecretsFS(pathfs.NewDefaultFileSystem(), fio.FIOMaps())
+	sfs,_ := secretsfs.NewSecretsFS(pathfs.NewDefaultFileSystem(), fio.FIOMaps(), store.GetStore())
 	pathnfs := pathfs.NewPathNodeFs(sfs, nil)
 
 	server, _, err := nodefs.MountRoot(mountpoint, pathnfs.Root(), nodefs.NewOptions())

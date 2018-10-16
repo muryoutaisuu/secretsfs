@@ -1,26 +1,16 @@
 package store
 
-import (
-	"log"
-	"log/syslog"
-)
-
 // stores contains all registered Stores
-var stores []Store
+var store Store
 
-// Log is used across store package for logging needs
-// uses the syslog logger, set up during init()
-var Linf, Lerr *log.Logger
-
-func init() {
-	Linf,_ := syslog.NewLogger(syslog.LOG_INFO, log.LstdFlags)
-	Linf.Println("Setup logging")
-	//Lerr,_ := syslog.NewLogger(syslog.LOG_ERR, log.LstdFlags)
+// Store returns currently active Store Implementation
+func GetStore() Store {
+	return store
 }
 
-// RegisterStore registers Stores
+// RegisterStore function registers Stores.
+// It is called from within the init() Function of other Store Implementations.
 func RegisterStore(s Store) {
-	Linf.Println(s.String())
-	stores = append(stores, s)
+	store = s
 }
 

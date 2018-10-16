@@ -3,23 +3,25 @@ package secretsfs
 // after the example: https://github.com/hanwen/go-fuse/blob/master/example/hello/main.go
 
 import (
-	"log"
-
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
+
 	"github.com/Muryoutaisuu/secretsfs/pkg/fio"
+	"github.com/Muryoutaisuu/secretsfs/pkg/store"
 )
 
 type SecretsFS struct {
 	pathfs.FileSystem
 	fms map[string]*fio.FIOMap
+	store store.Store
 }
 
-func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap) (*SecretsFS, error) {
+func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap, s store.Store) (*SecretsFS, error) {
 	sfs := SecretsFS{
 		FileSystem: fs,
 		fms: fms,
+		store: s,
 	}
 	return &sfs, nil
 }
@@ -33,22 +35,7 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 			}, fuse.OK
 		}
 	}
-	switch name {
-	case "file.txt":
-		return &fuse.Attr{
-			Mode: fuse.S_IFREG | 0644, Size: uint64(len(name)),
-		}, fuse.OK
-	case "secretsfiles/natiitest.txt":
-		return &fuse.Attr{
-			Mode: fuse.S_IFREG | 0440, Size: uint64(len(name)),
-		}, fuse.OK
-	case "":
-		return &fuse.Attr{
-			Mode: fuse.S_IFDIR | 0755,
-		}, fuse.OK
-	}
-	log.Fatal(name +" does not exist")
-	return nil, fuse.ENOENT
+	return sfs.store.GetAttr(name, context)
 }
 
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
@@ -63,7 +50,7 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 		}
 		return c, fuse.OK
 	}
-	return nil, fuse.ENOENT
+	return sfs.store.OpenDir(name, context)
 }
 
 func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
