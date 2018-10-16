@@ -3,6 +3,9 @@ package secretsfs
 // after the example: https://github.com/hanwen/go-fuse/blob/master/example/hello/main.go
 
 import (
+	"strings"
+	"path/filepath"
+
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
@@ -27,15 +30,14 @@ func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap, s store.Stor
 }
 
 func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
-	_,ok := sfs.fms[name]
-	switch ok {
-		case true : {
-			return &fuse.Attr{
-				Mode: fuse.S_IFDIR | 0755,
-			}, fuse.OK
-		}
+	root, subpath := rootName(name)
+	if _,ok := sfs.fms[root]; ok {
+		return sfs.store.GetAttr(subpath, context)
 	}
-	return sfs.store.GetAttr(name, context)
+	if root == "" && subpath == "" {
+		return &fuse.Attr{Mode: fuse.S_IFDIR | 0755,}, fuse.OK
+	}
+	return &fuse.Attr{}, fuse.ENOENT
 }
 
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
@@ -54,11 +56,13 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 }
 
 func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
-	if name != "file.txt" {
-		return nil, fuse.ENOENT
-	}
-	if flags&fuse.O_ANYWRITE != 0 {
-		return nil, fuse.EPERM
-	}
-	return nodefs.NewDataFile([]byte(name)), fuse.OK
+	return sfs.store.Open(name, flags, context)
+}
+
+
+func rootName(path string) (root, subpath string) {
+  list := strings.Split(path, string(filepath.Separator))
+  root = list[0]
+  subpath = filepath.Join(list[1:]...)
+  return
 }
