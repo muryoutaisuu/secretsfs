@@ -12,7 +12,7 @@ type FIOSecretsfiles struct {}
 var sto store.Store
 
 func (t *FIOSecretsfiles) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
-	return &fuse.Attr{ Mode: fuse.S_IFDIR | 0755,}, fuse.OK
+	return sto.GetAttr(name, context)
 }
 
 func (t *FIOSecretsfiles) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {

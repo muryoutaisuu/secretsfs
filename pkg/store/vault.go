@@ -20,13 +20,9 @@ type Vault struct {
 
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
   switch name {
-  case "file.txt":
+  case "test.txt":
     return &fuse.Attr{
       Mode: fuse.S_IFREG | 0644, Size: uint64(len(name)),
-    }, fuse.OK
-  case "secretsfiles/natiitest.txt":
-    return &fuse.Attr{
-      Mode: fuse.S_IFREG | 0440, Size: uint64(len(name)),
     }, fuse.OK
   case "":
     return &fuse.Attr{
@@ -38,13 +34,15 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 }
 
 func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
-	return nil, fuse.ENOENT
+	//return []fuse.DirEntry{}, fuse.OK
+	return []fuse.DirEntry{{Name: "test.txt", Mode: fuse.S_IFREG}}, fuse.OK
+	//return nil, fuse.ENOENT
 }
 
 func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
-	if name != "file.txt" {
-    return nil, fuse.ENOENT
-  }
+	if name == "test.txt" {
+		return nodefs.NewDataFile([]byte(os.Getenv("VAULT_ADDR"))), fuse.OK
+	}
   if flags&fuse.O_ANYWRITE != 0 {
     return nil, fuse.EPERM
   }
