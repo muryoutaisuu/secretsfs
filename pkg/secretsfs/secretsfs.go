@@ -38,9 +38,9 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 		return &fuse.Attr{
 			Mode: fuse.S_IFREG | 0644, Size: uint64(len(name)),
 		}, fuse.OK
-	case "natiitest.txt":
+	case "secretsfiles/natiitest.txt":
 		return &fuse.Attr{
-			Mode: fuse.S_IFREG | 0644, Size: uint64(len(name)),
+			Mode: fuse.S_IFREG | 0440, Size: uint64(len(name)),
 		}, fuse.OK
 	case "":
 		return &fuse.Attr{
@@ -53,7 +53,7 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
 	if _,ok := sfs.fms[name]; ok {
-		c = []fuse.DirEntry{{Name: "natiitest.txt", Mode: fuse.S_IFREG}}
+		c = []fuse.DirEntry{{Name: "natiitest.txt", Mode: fuse.S_IFREG | 0440}}
 		return c, fuse.OK
 	}
 	if name == "" {
