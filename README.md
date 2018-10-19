@@ -1,5 +1,8 @@
 # secretsfs
 
+GoDoc: https://godoc.org/github.com/Muryoutaisuu/secretsfs/pkg
+GoWalker: https://gowalker.org/github.com/Muryoutaisuu/secretsfs/pkg
+
 TODO: README
 
 ## Local GoDoc
