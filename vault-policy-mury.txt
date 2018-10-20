@@ -1,0 +1,6 @@
+path "secret" {
+    capabilities = ["list","read"]
+}
+path "secret/hello" {
+    capabilities = ["list","read"]
+}
