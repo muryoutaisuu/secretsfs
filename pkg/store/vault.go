@@ -18,10 +18,10 @@ import (
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 )
 
-type authParameter struct {
-	Role_id string `yaml:"role_id"`
-	Secret_id string `yaml:"secret_id"`
-}
+//type authParameter struct {
+//	Role_id string `yaml:"role_id"`
+//	Secret_id string `yaml:"secret_id"`
+//}
 
 type Vault struct {
 	client *api.Client
@@ -58,16 +58,14 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.F
 			log.Print(err)
 			return nil, fuse.EIO
 		}
-		s,err := v.getAccessToken(u)
+		a,err := v.getAccessToken(u)
 		if err != nil {
 			log.Print("msg=\"could not load accessToken\"")
-			log.Print(s)
+			log.Print(a)
 			return nil, fuse.EIO
 		}
+		//return nodefs.NewDataFile([]byte("mystring")), fuse.OK
 		return nodefs.NewDataFile([]byte("mystring")), fuse.OK
-		//s,_ := v.client.Auth().Token().LookupSelf()
-		//mys,_ := s.TokenID()
-		//return nodefs.NewDataFile([]byte(mys)), fuse.OK
 	}
   if flags&fuse.O_ANYWRITE != 0 {
     return nil, fuse.EPERM
@@ -93,7 +91,9 @@ func (v *Vault) setToken(context *fuse.Context) error {
 	if err != nil {
 		return err
 	}
+	log.Print(string(jsonData))
 	v.client.SetToken(string(jsonData))
+	log.Print(v.client.Token())
 	return nil
 }
 
@@ -133,14 +133,19 @@ func (v *Vault) secret(u *user.User) (*api.Secret, error) {
 
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
+	log.Print("reading: "+path)
 	o,err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Print(err)
 		return "",err
 	}
 	authToken := strings.TrimSuffix(string(o), "\n")
+	log.Print("AuthToken is: "+authToken)
 	return authToken,nil
 }
+
+
+
 
 
 
