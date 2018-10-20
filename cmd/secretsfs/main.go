@@ -24,7 +24,10 @@ func main() {
 	}
 	mountpoint := flag.Arg(0)
 
-	sfs,_ := secretsfs.NewSecretsFS(pathfs.NewDefaultFileSystem(), fio.FIOMaps(), store.GetStore())
+	sfs,err := secretsfs.NewSecretsFS(pathfs.NewDefaultFileSystem(), fio.FIOMaps(), store.GetStore())
+	if err != nil {
+		log.Fatal(err)
+	}
 	pathnfs := pathfs.NewPathNodeFs(sfs, nil)
 
 	server, _, err := nodefs.MountRoot(mountpoint, pathnfs.Root(), nodefs.NewOptions())
