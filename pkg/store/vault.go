@@ -73,8 +73,8 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.F
   return nodefs.NewDataFile([]byte(name)), fuse.OK
 }
 
-func (v *Vault) String() (string, error) {
-	return "Vault",nil
+func (v *Vault) String() (string) {
+	return "Vault"
 }
 
 
