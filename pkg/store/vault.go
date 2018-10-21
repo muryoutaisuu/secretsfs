@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"io/ioutil"
 	"path/filepath"
-	"log"
 	"os"
 	"os/user"
 	"strings"
@@ -29,39 +28,54 @@ type Vault struct {
 }
 
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
+	Log.Debug.Printf("GetAttr name: %v\n",name)
 	if name == "" {
     return &fuse.Attr{
       Mode: fuse.S_IFDIR | 0550,
     }, fuse.OK
 	}
-	if name == "test.txt" {
+	if name == "secret" {
+    return &fuse.Attr{
+      Mode: fuse.S_IFDIR | 0550,
+    }, fuse.OK
+	}
+	if name == "secret/hello" {
     return &fuse.Attr{
       Mode: fuse.S_IFREG | 0644, Size: uint64(len(name)),
     }, fuse.OK
 	}
-  log.Print(name +" does not exist")
+  Log.Warn.Print(name +" does not exist")
   return nil, fuse.ENOENT
 }
 
 func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
 	//return []fuse.DirEntry{}, fuse.OK
-	return []fuse.DirEntry{{Name: "test.txt", Mode: fuse.S_IFREG}}, fuse.OK
-	//return nil, fuse.ENOENT
+	Log.Debug.Printf("GetAttr name: %v\n",name)
+	if name == "" {
+		return []fuse.DirEntry{{Name: "secret", Mode: fuse.S_IFDIR}}, fuse.OK
+	}
+	if name == "secret" {
+		return []fuse.DirEntry{{Name: "hello", Mode: fuse.S_IFREG}}, fuse.OK
+	}
+	return nil, fuse.ENOENT
 }
 
 func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
-	if name == "test.txt" {
-		//return nodefs.NewDataFile([]byte(os.Getenv("VAULT_ADDR"))), fuse.OK
-		v.setToken(context)
+	Log.Debug.Printf("GetAttr name: %v\n",name)
+	if name == "secret/hello" {
+		err := v.setToken(context)
+		if err != nil {
+			Log.Error.Print(err)
+			return nil, fuse.EIO
+		}
 		u,err := user.LookupId(strconv.Itoa(int(context.Owner.Uid)))
 		if err != nil {
-			log.Print(err)
+			Log.Error.Print(err)
 			return nil, fuse.EIO
 		}
 		a,err := v.getAccessToken(u)
 		if err != nil {
-			log.Print("msg=\"could not load accessToken\"")
-			log.Print(a)
+			Log.Error.Printf("msg=\"could not load accessToken\" accessTokenValue=\"%v\"",a)
 			return nil, fuse.EIO
 		}
 		//return nodefs.NewDataFile([]byte("mystring")), fuse.OK
@@ -91,25 +105,27 @@ func (v *Vault) setToken(context *fuse.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Print(string(jsonData))
+	Log.Debug.Print(string(jsonData))
 	v.client.SetToken(string(jsonData))
-	log.Print(v.client.Token())
+	Log.Debug.Print(v.client.Token())
 	return nil
 }
 
 func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 	auth,err := v.readAuthToken(u)
 	if err != nil {
-		log.Print(err)
+		Log.Error.Print(err)
 		return &api.Secret{}, err
 	}
 	// https://groups.google.com/forum/#!topic/vault-tool/-4F2RLnGrSE
 	data := map[string]interface{}{
 		"role_id": auth,
 	}
+	Log.Debug.Printf("login_payload=%v\n",data)
 	resp,err := v.client.Logical().Write("auth/approle/login", data)
+	Log.Debug.Printf("resp=%v Data=%v\n",resp,resp.Data)
 	if err != nil {
-		log.Print(err)
+		Log.Error.Print(err)
 		return &api.Secret{}, err
 	}
 	if resp.Auth == nil {
@@ -121,7 +137,7 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 func (v *Vault) secret(u *user.User) (*api.Secret, error) {
 	authToken,err := v.readAuthToken(u)
 	if err != nil {
-		log.Print(err)
+		Log.Error.Print(err)
 		return &api.Secret{}, err
 	}
 	c := v.client
@@ -133,14 +149,14 @@ func (v *Vault) secret(u *user.User) (*api.Secret, error) {
 
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
-	log.Print("reading: "+path)
+	Log.Info.Print("msg=\"reading authToken\" path=\"%v\"",path)
 	o,err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Print(err)
+		Log.Error.Print(err)
 		return "",err
 	}
 	authToken := strings.TrimSuffix(string(o), "\n")
-	log.Print("AuthToken is: "+authToken)
+	Log.Debug.Printf("msg=\"authToken successfully read\" path=\"%v\"",path)
 	return authToken,nil
 }
 
@@ -156,7 +172,7 @@ func init() {
 		Address: os.Getenv("VAULT_ADDR"),
 	})
 	if err != nil {
-		log.Fatal(err)
+		Log.Error.Fatal(err)
 	}
 	v := Vault{
 		client: c,

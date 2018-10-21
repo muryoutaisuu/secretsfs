@@ -1,7 +1,14 @@
 package store
 
+import (
+	"github.com/Muryoutaisuu/secretsfs/pkg/sfslog"
+)
+
 // stores contains all registered Stores
 var store Store
+
+// Log contains all the needed Loggers
+var Log *sfslog.Log = sfslog.Logger()
 
 // Store returns currently active Store Implementation
 func GetStore() Store {

@@ -43,3 +43,4 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "  %s MOUNTPOINT\n", os.Args[0])
 	flag.PrintDefaults()
 }
+

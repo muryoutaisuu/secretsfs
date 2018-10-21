@@ -3,7 +3,6 @@ package secretsfs
 // after the example: https://github.com/hanwen/go-fuse/blob/master/example/hello/main.go
 
 import (
-	"log"
 	"strings"
 	"path/filepath"
 
@@ -13,7 +12,10 @@ import (
 
 	"github.com/Muryoutaisuu/secretsfs/pkg/fio"
 	"github.com/Muryoutaisuu/secretsfs/pkg/store"
+	"github.com/Muryoutaisuu/secretsfs/pkg/sfslog"
 )
+
+var Log *sfslog.Log = sfslog.Logger()
 
 type SecretsFS struct {
 	pathfs.FileSystem
@@ -32,6 +34,7 @@ func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap, s store.Stor
 
 func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	root, subpath := rootName(name)
+	Log.Info.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"",name,root,subpath)
 	if _,ok := sfs.fms[root]; ok {
 		return sfs.store.GetAttr(subpath, context)
 	}
@@ -43,8 +46,8 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
 	root, subpath := rootName(name)
+	Log.Info.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"",name,root,subpath)
 	if _,ok := sfs.fms[root]; ok {
-		log.Printf("secretsfs.go: OpenDir: name=\"%v\", subpath=\"%v\"",name,subpath)
 		return sfs.fms[root].Provider.OpenDir(subpath, context)
 	}
 	if name == "" {
@@ -59,12 +62,10 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 
 func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	root, subpath := rootName(name)
+	Log.Info.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"",name,root,subpath)
 	if _,ok := sfs.fms[root]; ok {
 		return sfs.fms[root].Provider.Open(subpath, flags, context)
 	}
-	//if name == "" {
-	//	return nil, fuse.EPERM
-	//}
 	return nil, fuse.EPERM
 }
 
@@ -76,3 +77,4 @@ func rootName(path string) (root, subpath string) {
   subpath = filepath.Join(list[1:]...)
   return
 }
+
