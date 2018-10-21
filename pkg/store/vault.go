@@ -17,6 +17,10 @@ import (
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 )
 
+const (
+	MTDATA = "secret/metadata/"
+)
+
 //type authParameter struct {
 //	Role_id string `yaml:"role_id"`
 //	Secret_id string `yaml:"secret_id"`
@@ -29,16 +33,17 @@ type Vault struct {
 
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	Log.Debug.Printf("GetAttr name: %v\n",name)
-	if name == "" {
+	name = MTDATA + name
+	if name == MTDATA { //opening directory (aka secretsfiles/
     return &fuse.Attr{
       Mode: fuse.S_IFDIR | 0550,
     }, fuse.OK
 	}
-	if name == "secret" {
-    return &fuse.Attr{
-      Mode: fuse.S_IFDIR | 0550,
-    }, fuse.OK
-	}
+	//if name == "secret/metadata/" {
+  //  return &fuse.Attr{
+  //    Mode: fuse.S_IFDIR | 0550,
+  //  }, fuse.OK
+	//}
 	if name == "secret/hello" {
     return &fuse.Attr{
       Mode: fuse.S_IFREG | 0644, Size: uint64(len(name)),
@@ -51,7 +56,7 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
 	//return []fuse.DirEntry{}, fuse.OK
 	Log.Debug.Printf("GetAttr name=\"%v\"\n",name)
-	name = "secret/metadata/" + name
+	name = MTDATA + name
 	s,err := v.client.Logical().List(name)
 	if err != nil {
 		Log.Error.Print(err)
@@ -59,31 +64,44 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 	}
 	Log.Debug.Printf("GetAttr name=\"%v\" secret=\"%v\" secret.Data=\"%v\"\n",name,s,s.Data)
 
-	data := s.Data
-	Log.Debug.Printf("data=\"%v\"\n",data["keys"])
-	keys := data["keys"]
-	Log.Info.Printf("keys=\"%v\" keysType=\"%T\" keys0Type=\"%T\"\n",keys,keys)
-	d,ok := keys.([]api.Secret)
-	if ok != true {
-		Log.Error.Printf("dataconversion ok=\"%v\"\n",ok)
-		Log.Debug.Printf("dataconversion d=\"%v\"\n",d)
-		test := []string{"myfirst", "mysecond"}
-		Log.Debug.Printf("dataconversion test=\"%v\"\n",test)
-		return nil, fuse.EIO
+	// https://github.com/asteris-llc/vaultfs/blob/master/fs/root.go
+	dirs := []fuse.DirEntry{}
+	for i := 0; i < len(s.Data["keys"].([]interface{})); i++ {
+		d := fuse.DirEntry{
+			Name:  s.Data["keys"].([]interface{})[i].(string),
+			Mode: fuse.S_IFREG,
+			//Inode: 1,
+			//Type:  fuse.DT_File, // TODO: A lie, consider an alternative
+		}
+		dirs = append(dirs, d)
 	}
+	return dirs,fuse.OK
 
-	Log.Debug.Printf("d=\"%v\" dType=\"%T\"\n",d,d)
+	//data := s.Data
+	//Log.Debug.Printf("data=\"%v\"\n",data["keys"])
+	//keys := data["keys"]
+	//Log.Info.Printf("keys=\"%v\" keysType=\"%T\" keys0Type=\"%T\"\n",keys,keys)
+	//d,ok := keys.([]api.Secret)
+	//if ok != true {
+	//	Log.Error.Printf("dataconversion ok=\"%v\"\n",ok)
+	//	Log.Debug.Printf("dataconversion d=\"%v\"\n",d)
+	//	test := []string{"myfirst", "mysecond"}
+	//	Log.Debug.Printf("dataconversion test=\"%v\"\n",test)
+	//	return nil, fuse.EIO
+	//}
 
-	//k := s.Data["keys"]
-	//Log.Debug.Printf("k=\"%v\"\n",k)
-	//Log.Debug.Printf("k=\"%v\"\n",k[0])
-	if name == "" {
-		return []fuse.DirEntry{{Name: "secret", Mode: fuse.S_IFDIR}}, fuse.OK
-	}
-	if name == "secret" {
-		return []fuse.DirEntry{{Name: "hello", Mode: fuse.S_IFREG}}, fuse.OK
-	}
-	return nil, fuse.ENOENT
+	//Log.Debug.Printf("d=\"%v\" dType=\"%T\"\n",d,d)
+
+	////k := s.Data["keys"]
+	////Log.Debug.Printf("k=\"%v\"\n",k)
+	////Log.Debug.Printf("k=\"%v\"\n",k[0])
+	//if name == "" {
+	//	return []fuse.DirEntry{{Name: "secret", Mode: fuse.S_IFDIR}}, fuse.OK
+	//}
+	//if name == "secret" {
+	//	return []fuse.DirEntry{{Name: "hello", Mode: fuse.S_IFREG}}, fuse.OK
+	//}
+	//return nil, fuse.ENOENT
 }
 
 func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
