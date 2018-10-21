@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 	"io"
-	"io/ioutil"
+	//"io/ioutil"
 )
 
 type Log struct {
@@ -18,7 +18,7 @@ type Log struct {
 func Logger() *Log {
 	var l Log
 	// log setup
-	logInit(&l, ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
+	logInit(&l, os.Stdout, os.Stdout, os.Stdout, os.Stderr)
 	return &l
 }
 

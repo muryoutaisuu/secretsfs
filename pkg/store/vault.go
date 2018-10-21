@@ -75,7 +75,7 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.F
 		}
 		a,err := v.getAccessToken(u)
 		if err != nil {
-			Log.Error.Printf("msg=\"could not load accessToken\" accessTokenValue=\"%v\"",a)
+			Log.Error.Printf("msg=\"could not load accessToken\" accessTokenValue=\"%v\"\n",a)
 			return nil, fuse.EIO
 		}
 		//return nodefs.NewDataFile([]byte("mystring")), fuse.OK
@@ -149,14 +149,14 @@ func (v *Vault) secret(u *user.User) (*api.Secret, error) {
 
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
-	Log.Info.Print("msg=\"reading authToken\" path=\"%v\"",path)
+	Log.Debug.Print("msg=\"reading authToken\" path=\"%v\"\n",path)
 	o,err := ioutil.ReadFile(path)
 	if err != nil {
 		Log.Error.Print(err)
 		return "",err
 	}
 	authToken := strings.TrimSuffix(string(o), "\n")
-	Log.Debug.Printf("msg=\"authToken successfully read\" path=\"%v\"",path)
+	Log.Debug.Printf("msg=\"authToken successfully read\" path=\"%v\"\n",path)
 	return authToken,nil
 }
 
