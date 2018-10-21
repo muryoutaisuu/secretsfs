@@ -1,6 +1,3 @@
-path "secret" {
-    capabilities = ["list","read"]
-}
-path "secret/hello" {
-    capabilities = ["list","read"]
+path "secret/*" {
+    capabilities = ["delete","create","update","list","read"]
 }
