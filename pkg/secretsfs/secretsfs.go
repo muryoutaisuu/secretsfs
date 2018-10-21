@@ -3,6 +3,7 @@ package secretsfs
 // after the example: https://github.com/hanwen/go-fuse/blob/master/example/hello/main.go
 
 import (
+	"log"
 	"strings"
 	"path/filepath"
 
@@ -43,7 +44,8 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
 	root, subpath := rootName(name)
 	if _,ok := sfs.fms[root]; ok {
-		return sfs.fms[name].Provider.OpenDir(subpath, context)
+		log.Printf("secretsfs.go: OpenDir: name=\"%v\", subpath=\"%v\"",name,subpath)
+		return sfs.fms[root].Provider.OpenDir(subpath, context)
 	}
 	if name == "" {
 		c = []fuse.DirEntry{}
