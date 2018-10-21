@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/user"
 	"strings"
-	"encoding/json"
+	//"encoding/json"
 
 	//"gopkg.in/yaml.v2"
 
@@ -50,7 +50,33 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 
 func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
 	//return []fuse.DirEntry{}, fuse.OK
-	Log.Debug.Printf("GetAttr name: %v\n",name)
+	Log.Debug.Printf("GetAttr name=\"%v\"\n",name)
+	name = "secret/metadata/" + name
+	s,err := v.client.Logical().List(name)
+	if err != nil {
+		Log.Error.Print(err)
+		return nil, fuse.EIO
+	}
+	Log.Debug.Printf("GetAttr name=\"%v\" secret=\"%v\" secret.Data=\"%v\"\n",name,s,s.Data)
+
+	data := s.Data
+	Log.Debug.Printf("data=\"%v\"\n",data["keys"])
+	keys := data["keys"]
+	Log.Info.Printf("keys=\"%v\" keysType=\"%T\" keys0Type=\"%T\"\n",keys,keys)
+	d,ok := keys.([]api.Secret)
+	if ok != true {
+		Log.Error.Printf("dataconversion ok=\"%v\"\n",ok)
+		Log.Debug.Printf("dataconversion d=\"%v\"\n",d)
+		test := []string{"myfirst", "mysecond"}
+		Log.Debug.Printf("dataconversion test=\"%v\"\n",test)
+		return nil, fuse.EIO
+	}
+
+	Log.Debug.Printf("d=\"%v\" dType=\"%T\"\n",d,d)
+
+	//k := s.Data["keys"]
+	//Log.Debug.Printf("k=\"%v\"\n",k)
+	//Log.Debug.Printf("k=\"%v\"\n",k[0])
 	if name == "" {
 		return []fuse.DirEntry{{Name: "secret", Mode: fuse.S_IFDIR}}, fuse.OK
 	}
@@ -101,12 +127,7 @@ func (v *Vault) setToken(context *fuse.Context) error {
 	if err != nil {
 		return err
 	}
-	jsonData, err := json.Marshal(a.Data)
-	if err != nil {
-		return err
-	}
-	Log.Debug.Print(string(jsonData))
-	v.client.SetToken(string(jsonData))
+	v.client.SetToken(a.Auth.ClientToken)
 	Log.Debug.Print(v.client.Token())
 	return nil
 }
@@ -118,12 +139,12 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 		return &api.Secret{}, err
 	}
 	// https://groups.google.com/forum/#!topic/vault-tool/-4F2RLnGrSE
-	data := map[string]interface{}{
+	postdata := map[string]interface{}{
 		"role_id": auth,
 	}
-	Log.Debug.Printf("login_payload=%v\n",data)
-	resp,err := v.client.Logical().Write("auth/approle/login", data)
-	Log.Debug.Printf("resp=%v Data=%v\n",resp,resp.Data)
+	Log.Debug.Printf("login_payload=%v\n",postdata)
+	resp,err := v.client.Logical().Write("auth/approle/login", postdata)
+	Log.Debug.Printf("resp=%v Data=%v\n ClientToken=\"%v\"",resp,resp.Data,resp.Auth.ClientToken)
 	if err != nil {
 		Log.Error.Print(err)
 		return &api.Secret{}, err
@@ -149,7 +170,7 @@ func (v *Vault) secret(u *user.User) (*api.Secret, error) {
 
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
-	Log.Debug.Print("msg=\"reading authToken\" path=\"%v\"\n",path)
+	Log.Debug.Printf("msg=\"reading authToken\" path=\"%v\"\n",path)
 	o,err := ioutil.ReadFile(path)
 	if err != nil {
 		Log.Error.Print(err)
