@@ -6,6 +6,7 @@ read ROOT
 export VAULT_TOKEN="$ROOT"
 echo "export ROOTTOKEN=$VAULT_TOKEN" > sourceit
 vault kv put secret/hello foo=world
+vault kv put secret/subdir/mury foo2=world2
 vault auth enable approle
 vault policy write mury vault-policy-mury.txt
 vault write auth/approle/role/root policies=default,mury bind_secret_id=false token_bound_cidrs=127.0.0.1/24
