@@ -36,46 +36,54 @@ type Vault struct {
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	Log.Debug.Printf("GetAttr name: %v\n",name)
 	name = MTDATA + name
-	if name == MTDATA { //opening directory (aka secretsfiles/
+
+	// opening directory (aka secretsfiles/)
+	if name == MTDATA {
     return &fuse.Attr{
       Mode: fuse.S_IFDIR | 0550,
     }, fuse.OK
 	}
+
+	// get vault values
+	_,err := v.listDir(name)
+
+	// if err != nil, then it is not a true Vault directory or secretsfile
+	if err != nil {
+		return &fuse.Attr{
+      Mode: fuse.S_IFREG | 0644, Size: uint64(len(name)),
+    }, fuse.OK
+	}
+
 	//if name == "secret/metadata/" {
   //  return &fuse.Attr{
   //    Mode: fuse.S_IFDIR | 0550,
   //  }, fuse.OK
 	//}
-	if name == MTDATA+"hello" || name == MTDATA+"mury" {
-    return &fuse.Attr{
-      Mode: fuse.S_IFREG | 0644, Size: uint64(len(name)),
-    }, fuse.OK
-	}
-  Log.Warn.Print(name +" does not exist")
-  return nil, fuse.ENOENT
+	
+	// check whether name is a true vault dir
+	//if isdir := v.isDir(name); isdir {
+  //  return &fuse.Attr{
+  //    Mode: fuse.S_IFDIR | 0550,
+  //  }, fuse.OK
+	//}
+
+
+
+	// TODO: NOT YET CHECKING FOR NOT EXISTING
+  return &fuse.Attr{
+    Mode: fuse.S_IFDIR | 0550,
+  }, fuse.OK
 }
 
 func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
 	//return []fuse.DirEntry{}, fuse.OK
 	Log.Debug.Printf("GetAttr name=\"%v\"\n",name)
 	name = MTDATA + name
-	s,err := v.client.Logical().List(name)
+	dirs,err := v.listDir(name)
 	if err != nil {
-		Log.Error.Print(err)
-		return nil, fuse.EIO
+		return *dirs, fuse.EIO
 	}
-	Log.Debug.Printf("GetAttr name=\"%v\" secret=\"%v\" secret.Data=\"%v\"\n",name,s,s.Data)
-	dirs := []fuse.DirEntry{}
-	// https://github.com/asteris-llc/vaultfs/blob/master/fs/root.go
-	// TODO: add Error Handling
-	for i := 0; i < len(s.Data["keys"].([]interface{})); i++ {
-		d := fuse.DirEntry{
-			Name:  s.Data["keys"].([]interface{})[i].(string),
-			Mode: fuse.S_IFREG,
-		}
-		dirs = append(dirs, d)
-	}
-	return dirs,fuse.OK
+	return *dirs,fuse.OK
 }
 
 func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
@@ -90,9 +98,6 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.F
 	//for i := 0; i < len(s.Data["keys"].([]interface{})); i++ {
 	data := s.Data["data"].([]interface{})
 	return nodefs.NewDataFile([]byte(data[0].(string))), fuse.OK
-
-
-
 
 	if name == "secret/hello" {
 		err := v.setToken(context)
@@ -189,6 +194,39 @@ func (v *Vault) readAuthToken(u *user.User) (string, error) {
 
 
 
+
+func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
+	s,err := v.client.Logical().List(name)
+	if err != nil {
+		Log.Error.Print(err)
+		return &[]fuse.DirEntry{}, err
+	}
+	Log.Debug.Printf("GetAttr name=\"%v\" secret=\"%v\" secret.Data=\"%v\"\n",name,s,s.Data)
+	dirs := []fuse.DirEntry{}
+	// https://github.com/asteris-llc/vaultfs/blob/master/fs/root.go
+	// TODO: add Error Handling
+	for i := 0; i < len(s.Data["keys"].([]interface{})); i++ {
+		d := fuse.DirEntry{
+			Name:  s.Data["keys"].([]interface{})[i].(string),
+			Mode: fuse.S_IFREG,
+		}
+		dirs = append(dirs, d)
+	}
+	return &dirs,nil
+}
+
+func (v *Vault) isDir(dir *fuse.DirEntry) bool {
+	name := dir.Name
+	if name[len(name)-1:] == "/" {
+		return true
+	}
+	// if err is nil, then lookup in vault worked regularly
+	// that means, it is a true directory in vault
+	if _,err := v.listDir(name); err == nil {
+		return true
+	}
+	return false
+}
 
 
 
