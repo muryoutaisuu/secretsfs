@@ -18,7 +18,9 @@ import (
 )
 
 const (
+	// taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
 	MTDATA = "secret/metadata/"
+	DTDATA = "secret/data/"
 )
 
 //type authParameter struct {
@@ -44,7 +46,7 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
   //    Mode: fuse.S_IFDIR | 0550,
   //  }, fuse.OK
 	//}
-	if name == "secret/hello" {
+	if name == MTDATA+"hello" || name == MTDATA+"mury" {
     return &fuse.Attr{
       Mode: fuse.S_IFREG | 0644, Size: uint64(len(name)),
     }, fuse.OK
@@ -63,49 +65,35 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 		return nil, fuse.EIO
 	}
 	Log.Debug.Printf("GetAttr name=\"%v\" secret=\"%v\" secret.Data=\"%v\"\n",name,s,s.Data)
-
-	// https://github.com/asteris-llc/vaultfs/blob/master/fs/root.go
 	dirs := []fuse.DirEntry{}
+	// https://github.com/asteris-llc/vaultfs/blob/master/fs/root.go
+	// TODO: add Error Handling
 	for i := 0; i < len(s.Data["keys"].([]interface{})); i++ {
 		d := fuse.DirEntry{
 			Name:  s.Data["keys"].([]interface{})[i].(string),
 			Mode: fuse.S_IFREG,
-			//Inode: 1,
-			//Type:  fuse.DT_File, // TODO: A lie, consider an alternative
 		}
 		dirs = append(dirs, d)
 	}
 	return dirs,fuse.OK
-
-	//data := s.Data
-	//Log.Debug.Printf("data=\"%v\"\n",data["keys"])
-	//keys := data["keys"]
-	//Log.Info.Printf("keys=\"%v\" keysType=\"%T\" keys0Type=\"%T\"\n",keys,keys)
-	//d,ok := keys.([]api.Secret)
-	//if ok != true {
-	//	Log.Error.Printf("dataconversion ok=\"%v\"\n",ok)
-	//	Log.Debug.Printf("dataconversion d=\"%v\"\n",d)
-	//	test := []string{"myfirst", "mysecond"}
-	//	Log.Debug.Printf("dataconversion test=\"%v\"\n",test)
-	//	return nil, fuse.EIO
-	//}
-
-	//Log.Debug.Printf("d=\"%v\" dType=\"%T\"\n",d,d)
-
-	////k := s.Data["keys"]
-	////Log.Debug.Printf("k=\"%v\"\n",k)
-	////Log.Debug.Printf("k=\"%v\"\n",k[0])
-	//if name == "" {
-	//	return []fuse.DirEntry{{Name: "secret", Mode: fuse.S_IFDIR}}, fuse.OK
-	//}
-	//if name == "secret" {
-	//	return []fuse.DirEntry{{Name: "hello", Mode: fuse.S_IFREG}}, fuse.OK
-	//}
-	//return nil, fuse.ENOENT
 }
 
 func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
-	Log.Debug.Printf("GetAttr name: %v\n",name)
+	Log.Debug.Printf("Open name=\"%v\"\n",name)
+	name = DTDATA + name
+	s,err := v.client.Logical().Read(name)
+	if err != nil {
+		Log.Error.Print(err)
+		return nil, fuse.EIO
+	}
+	Log.Debug.Printf("Open name=\"%v\" secret=\"%v\" secret.Data=\"%v\"\n",name,s,s.Data)
+	//for i := 0; i < len(s.Data["keys"].([]interface{})); i++ {
+	data := s.Data["data"].([]interface{})
+	return nodefs.NewDataFile([]byte(data[0].(string))), fuse.OK
+
+
+
+
 	if name == "secret/hello" {
 		err := v.setToken(context)
 		if err != nil {
@@ -128,7 +116,7 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.F
   if flags&fuse.O_ANYWRITE != 0 {
     return nil, fuse.EPERM
   }
-  return nodefs.NewDataFile([]byte(name)), fuse.OK
+	return nil,fuse.ENOENT
 }
 
 func (v *Vault) String() (string) {
