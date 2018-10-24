@@ -24,3 +24,4 @@ echo "export ROLETOKEN=$ROLETOKEN" >> sourceit
 echo "export VAULT_TOKEN=$ROLETOKEN" >> sourceit
 vault kv list secret
 vault kv get secret/hello
+vault kv get secret/subdir/mury
