@@ -59,10 +59,13 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 	// get type
 	Log.Debug.Printf("name=\"%v\"\n",name)
 	t,err := v.getType(name)
+	Log.Debug.Printf("op=GetAttr t=\"%v\" err=\"%v\"\n",t,err)
 	if err != nil {
+		Log.Error.Printf("op=GetAttr err=\"%v\"\n",err)
 		return nil, fuse.EIO
 	}
 
+	// act according to type
 	switch t {
 	case CTrueDir:
 		return &fuse.Attr{
@@ -282,7 +285,9 @@ func (v *Vault) isDir(dir *fuse.DirEntry) bool {
 
 
 func (v *Vault) getType(name string) (Filetype, error){
+	Log.Debug.Printf("op=getType name=\"%v\"\n",name)
 	s,err := v.client.Logical().List(MTDATA + name)
+	Log.Debug.Printf("op=getType s=\"%v\" err=\"%v\"\n",s,err)
 	if err == nil && s != nil {
 		return CTrueDir, nil
 	}
