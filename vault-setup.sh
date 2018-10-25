@@ -25,3 +25,6 @@ echo "export VAULT_TOKEN=$ROLETOKEN" >> sourceit
 vault kv list secret
 vault kv get secret/hello
 vault kv get secret/subdir/mury
+echo "export SECRETSFS_FILE_ROLEID='.vault-roleid'" >> sourceit
+echo "export VAULT_ADDR='http://127.0.0.1:8200'" >> sourceit
+
