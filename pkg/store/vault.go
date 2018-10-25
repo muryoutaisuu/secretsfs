@@ -45,6 +45,7 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 	}
 
 	// get vault values
+	Log.Debug.Printf("name=\"%v\"",name)
 	_,err := v.listDir(name)
 
 	// if err != nil, then it is not a true Vault directory or secretsfile
@@ -197,10 +198,11 @@ func (v *Vault) readAuthToken(u *user.User) (string, error) {
 
 func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 	s,err := v.client.Logical().List(name)
-	if err != nil {
+	if err != nil || s.Data == nil {
 		Log.Error.Print(err)
 		return &[]fuse.DirEntry{}, err
 	}
+	Log.Debug.Printf("secret=\"%v\"",s)
 	Log.Debug.Printf("GetAttr name=\"%v\" secret=\"%v\" secret.Data=\"%v\"\n",name,s,s.Data)
 	dirs := []fuse.DirEntry{}
 	// https://github.com/asteris-llc/vaultfs/blob/master/fs/root.go
