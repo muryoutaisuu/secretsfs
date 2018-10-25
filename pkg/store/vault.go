@@ -46,18 +46,18 @@ type Vault struct {
 }
 
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
-	Log.Debug.Printf("GetAttr name: %v\n",name)
-	name = MTDATA + name
+	Log.Debug.Printf("ops=GetAttr name=\"%v\"\n",name)
+	//name = MTDATA + name
 
 	// opening directory (aka secretsfiles/)
-	if name == MTDATA {
+	if name == "" {
     return &fuse.Attr{
       Mode: fuse.S_IFDIR | 0550,
     }, fuse.OK
 	}
 
 	// get type
-	Log.Debug.Printf("name=\"%v\"",name)
+	Log.Debug.Printf("name=\"%v\"\n",name)
 	t,err := v.getType(name)
 	if err != nil {
 		return nil, fuse.EIO
@@ -84,19 +84,41 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 
 func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
 	Log.Debug.Printf("GetAttr name=\"%v\"\n",name)
-	name = MTDATA + name
-	dirs,err := v.listDir(name)
+	//name = MTDATA + name
+	t,err := v.getType(name)
+	Log.Debug.Printf("ops=OpenDir t=\"%v\" err=\"%v\"\n",t,err)
 	if err != nil {
 		Log.Error.Print(err)
-		return *dirs, fuse.EIO
+		return nil, fuse.EIO
 	}
-	return *dirs,fuse.OK
+
+	switch t {
+	case CTrueDir:
+		dirs,err := v.listDir(name)
+		Log.Debug.Printf("op=OpenDir name=\"%v%v\" dirs=\"%v\" err=\"%v\"\n",MTDATA,name,dirs,err)
+		if err != nil {
+			Log.Error.Print(err)
+			return *dirs, fuse.EIO
+		}
+		return *dirs, fuse.OK
+	case CFile:
+		s,err := v.client.Logical().Read(DTDATA + name)
+		if err != nil {
+			Log.Error.Print(err)
+			return nil, fuse.EIO
+		}
+		Log.Debug.Printf("op=OpenDir ctype=CFile secretType=\"%T\" secret=\"%v\"\n",s,s)
+		return []fuse.DirEntry{}, fuse.OK
+	case CValue:
+		return nil, fuse.ENOTDIR
+	}
+	return nil, fuse.ENOENT
 }
 
 func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
 	Log.Debug.Printf("Open name=\"%v\"\n",name)
-	name = DTDATA + name
-	s,err := v.client.Logical().Read(name)
+	//name = DTDATA + name
+	s,err := v.client.Logical().Read(DTDATA + name)
 	if err != nil {
 		Log.Error.Print(err)
 		return nil, fuse.EIO
@@ -165,7 +187,7 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 	}
 	Log.Debug.Printf("login_payload=%v\n",postdata)
 	resp,err := v.client.Logical().Write("auth/approle/login", postdata)
-	Log.Debug.Printf("resp=%v Data=%v\n ClientToken=\"%v\"",resp,resp.Data,resp.Auth.ClientToken)
+	Log.Debug.Printf("resp=%v Data=%v\n ClientToken=\"%v\"\n",resp,resp.Data,resp.Auth.ClientToken)
 	if err != nil {
 		Log.Error.Print(err)
 		return &api.Secret{}, err
@@ -203,8 +225,9 @@ func (v *Vault) readAuthToken(u *user.User) (string, error) {
 }
 
 func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
-	s,err := v.client.Logical().List(name)
-	Log.Debug.Printf("secret=\"%v\"",s)
+	Log.Debug.Printf("op=listDir MTDATA=\"%v\" name=\"%v\"",MTDATA,name)
+	s,err := v.client.Logical().List(MTDATA + name)
+	Log.Debug.Printf("secret=\"%v\"\n",s)
 
 	// can't list in vault
 	if err != nil || s == nil {
@@ -230,47 +253,47 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 }
 
 func (v *Vault) readPath(name string) (string, error) {
-	s,err := v.client.Logical().Read(name)
+	s,err := v.client.Logical().Read(DTDATA + name)
 	if err != nil || s == nil {
 		if err == nil {
 			errors.New("cant read")
 		}
 		return "",err
 	}
-	Log.Debug.Printf("op=read secret=\"%v\"",s)
+	Log.Debug.Printf("op=read secret=\"%v\"\n",s)
 	return "",nil
 }
 
 func (v *Vault) isDir(dir *fuse.DirEntry) bool {
 	name := dir.Name
 	if name[len(name)-1:] == "/" {
-		Log.Debug.Printf("isDir=true")
+		Log.Debug.Printf("isDir=true\n")
 		return true
 	}
 	// if err is nil, then lookup in vault worked regularly
 	// that means, it is a true directory in vault
 	if _,err := v.listDir(name); err == nil {
-		Log.Debug.Printf("isDir=true")
+		Log.Debug.Printf("isDir=true\n")
 		return true
 	}
-	Log.Debug.Printf("isDir=false")
+	Log.Debug.Printf("isDir=false\n")
 	return false
 }
 
 
 func (v *Vault) getType(name string) (Filetype, error){
-	s,err := v.client.Logical().List(name)
+	s,err := v.client.Logical().List(MTDATA + name)
 	if err == nil && s != nil {
 		return CTrueDir, nil
 	}
 
-	s,err = v.client.Logical().Read(name)
+	s,err = v.client.Logical().Read(DTDATA + name)
 	if err == nil && s!=nil {
 		return CFile, nil
 	}
 
 	name = path.Dir(name) // clip last element
-	s,err = v.client.Logical().Read(name)
+	s,err = v.client.Logical().Read(DTDATA + name)
 	if err == nil && s!=nil {
 		return CValue, nil
 	}
