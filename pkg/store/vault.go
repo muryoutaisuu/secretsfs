@@ -98,11 +98,11 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 	switch t {
 	case CTrueDir:
 		dirs,err := v.listDir(name)
-		Log.Debug.Printf("op=OpenDir name=\"%v%v\" dirs=\"%v\" err=\"%v\"\n",MTDATA,name,dirs,err)
 		if err != nil {
 			Log.Error.Print(err)
 			return *dirs, fuse.EIO
 		}
+		Log.Debug.Printf("op=OpenDir name=\"%v%v\" dirs=\"%v\" err=\"%v\"\n",MTDATA,name,dirs,err)
 		return *dirs, fuse.OK
 	case CFile:
 		s,err := v.client.Logical().Read(DTDATA + name)
@@ -237,7 +237,7 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 		if err == nil {
 			err = errors.New("cant list")
 		}
-		Log.Error.Print(err)
+		Log.Debug.Print(err)
 		return nil, err
 	}
 
@@ -245,12 +245,14 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 	dirs := []fuse.DirEntry{}
 	// https://github.com/asteris-llc/vaultfs/blob/master/fs/root.go
 	// TODO: add Error Handling
+	Log.Debug.Printf("op=listDir dirs=\"%v\"\n",dirs)
 	for i := 0; i < len(s.Data["keys"].([]interface{})); i++ {
 		d := fuse.DirEntry{
-			Name:  s.Data["keys"].([]interface{})[i].(string),
+			Name:  path.Base(s.Data["keys"].([]interface{})[i].(string)),
 			Mode: fuse.S_IFREG,
 		}
 		dirs = append(dirs, d)
+		Log.Debug.Printf("op=listDir dirs=\"%v\"\n",dirs)
 	}
 	return &dirs,nil
 }
