@@ -29,8 +29,8 @@ const (
 type Filetype int
 const (
 	CTrueDir   Filetype = 0 // exists in Vault as a directory
-	CValue     Filetype = 1 // Value of a key=value pair
-	CFile      Filetype = 2 // Key of a key=value pair, emulated as a directory
+	CFile      Filetype = 1 // Key of a key=value pair, emulated as a directory
+	CValue     Filetype = 2 // Value of a key=value pair
 	CNull      Filetype = 3 // not a valid vault element
 )
 
