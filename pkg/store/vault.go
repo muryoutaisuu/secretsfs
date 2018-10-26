@@ -58,12 +58,8 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 
 	// get type
 	Log.Debug.Printf("name=\"%v\"\n",name)
-	t,err := v.getType(name)
-	Log.Debug.Printf("op=GetAttr t=\"%v\" err=\"%v\"\n",t,err)
-	if err != nil {
-		Log.Error.Printf("op=GetAttr err=\"%v\"\n",err)
-		return nil, fuse.EIO
-	}
+	_,t := v.getType(name)
+	Log.Debug.Printf("op=GetAttr t=\"%v\"\n",t)
 
 	// act according to type
 	switch t {
@@ -88,13 +84,8 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 
 func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
 	Log.Debug.Printf("GetAttr name=\"%v\"\n",name)
-	//name = MTDATA + name
-	t,err := v.getType(name)
-	Log.Debug.Printf("ops=OpenDir t=\"%v\" err=\"%v\"\n",t,err)
-	if err != nil {
-		Log.Error.Print(err)
-		return nil, fuse.EIO
-	}
+	_,t := v.getType(name)
+	Log.Debug.Printf("ops=OpenDir t=\"%v\"\n",t)
 
 	switch t {
 	case CTrueDir:
@@ -121,41 +112,29 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 }
 
 func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
-	Log.Debug.Printf("Open name=\"%v\"\n",name)
-	//name = DTDATA + name
-	s,err := v.client.Logical().Read(DTDATA + name)
-	if err != nil {
-		Log.Error.Print(err)
-		return nil, fuse.EIO
-	}
-	Log.Debug.Printf("Open name=\"%v\" secret=\"%v\" secret.Data=\"%v\"\n",name,s,s.Data)
-	//for i := 0; i < len(s.Data["keys"].([]interface{})); i++ {
-	data := s.Data["data"].([]interface{})
-	return nodefs.NewDataFile([]byte(data[0].(string))), fuse.OK
+	Log.Debug.Printf("op=Open name=\"%v\"\n",name)
+	s,t := v.getType(name)
+	Log.Debug.Printf("op=Open t=\"%v\"\n",t)
 
-	if name == "secret/hello" {
-		err := v.setToken(context)
-		if err != nil {
-			Log.Error.Print(err)
+	switch t {
+	case CTrueDir:
+		return nil, fuse.EISDIR
+	case CFile:
+		return nil, fuse.EISDIR
+	case CValue:
+		k := path.Base(name)
+		Log.Debug.Printf("op=Open s=\"%v\" k=\"%v\"\n",s,k)
+		data,ok := s.Data["data"].(map[string]interface{})
+		if ok != true {
 			return nil, fuse.EIO
 		}
-		u,err := user.LookupId(strconv.Itoa(int(context.Owner.Uid)))
-		if err != nil {
-			Log.Error.Print(err)
+		e,ok := data[k].(string)
+		if ok != true {
 			return nil, fuse.EIO
 		}
-		a,err := v.getAccessToken(u)
-		if err != nil {
-			Log.Error.Printf("msg=\"could not load accessToken\" accessTokenValue=\"%v\"\n",a)
-			return nil, fuse.EIO
-		}
-		//return nodefs.NewDataFile([]byte("mystring")), fuse.OK
-		return nodefs.NewDataFile([]byte("mystring")), fuse.OK
+		return nodefs.NewDataFile([]byte(e)), fuse.OK
 	}
-  if flags&fuse.O_ANYWRITE != 0 {
-    return nil, fuse.EPERM
-  }
-	return nil,fuse.ENOENT
+	return nil, fuse.ENOENT
 }
 
 func (v *Vault) String() (string) {
@@ -275,6 +254,7 @@ func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 	for k := range data {
 		d := fuse.DirEntry{
 			Name: k,
+			//Name: data[k].(string),
 			Mode: fuse.S_IFREG,
 		}
 		dirs = append(dirs, d)
@@ -300,26 +280,26 @@ func (v *Vault) isDir(dir *fuse.DirEntry) bool {
 }
 
 
-func (v *Vault) getType(name string) (Filetype, error){
+func (v *Vault) getType(name string) (*api.Secret, Filetype){
 	Log.Debug.Printf("op=getType name=\"%v\"\n",name)
 	s,err := v.client.Logical().List(MTDATA + name)
 	Log.Debug.Printf("op=getType s=\"%v\" err=\"%v\"\n",s,err)
 	if err == nil && s != nil {
-		return CTrueDir, nil
+		return s, CTrueDir
 	}
 
 	s,err = v.client.Logical().Read(DTDATA + name)
 	if err == nil && s!=nil {
-		return CFile, nil
+		return s, CFile
 	}
 
 	name = path.Dir(name) // clip last element
 	s,err = v.client.Logical().Read(DTDATA + name)
 	if err == nil && s!=nil {
-		return CValue, nil
+		return s, CValue
 	}
 
-	return CNull, nil
+	return nil, CNull
 }
 
 
