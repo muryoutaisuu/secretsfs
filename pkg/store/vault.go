@@ -72,6 +72,7 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
       Mode: fuse.S_IFDIR | 0550,
     }, fuse.OK
 	case CFile:
+		Log.Debug.Printf("op=GetAttr t=CFile\n")
 		return &fuse.Attr{
       Mode: fuse.S_IFDIR | 0550,
     }, fuse.OK
@@ -105,13 +106,14 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 		Log.Debug.Printf("op=OpenDir name=\"%v%v\" dirs=\"%v\" err=\"%v\"\n",MTDATA,name,dirs,err)
 		return *dirs, fuse.OK
 	case CFile:
-		s,err := v.client.Logical().Read(DTDATA + name)
+		dirs,err := v.listFile(name)
+		Log.Debug.Printf("op=OpenDir dirs=\"%v\" err=\"%v\"\n",dirs,err)
 		if err != nil {
 			Log.Error.Print(err)
 			return nil, fuse.EIO
 		}
-		Log.Debug.Printf("op=OpenDir ctype=CFile secretType=\"%T\" secret=\"%v\"\n",s,s)
-		return []fuse.DirEntry{}, fuse.OK
+		Log.Debug.Printf("op=OpenDir ctype=CFile secretType=\"%T\" secret=\"%v\"\n",dirs,dirs)
+		return *dirs, fuse.OK
 	case CValue:
 		return nil, fuse.ENOTDIR
 	}
@@ -257,16 +259,28 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 	return &dirs,nil
 }
 
-func (v *Vault) readPath(name string) (string, error) {
+func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 	s,err := v.client.Logical().Read(DTDATA + name)
 	if err != nil || s == nil {
 		if err == nil {
 			errors.New("cant read")
 		}
-		return "",err
+		return nil,err
 	}
-	Log.Debug.Printf("op=read secret=\"%v\"\n",s)
-	return "",nil
+	Log.Debug.Printf("op=listFile secret=\"%v\"\n",s)
+	Log.Debug.Printf("op=listFile secret.Data=\"%v\" secret.DataType=\"%T\"\n",s.Data,s.Data)
+	data := s.Data["data"].(map[string]interface{})
+	Log.Debug.Printf("op=listFile data=\"%v\" dataType=\"%T\"\n",data,data)
+	dirs := []fuse.DirEntry{}
+	for k := range data {
+		d := fuse.DirEntry{
+			Name:  data[k].(string),
+			Mode: fuse.S_IFREG,
+		}
+		dirs = append(dirs, d)
+		Log.Debug.Printf("op=listFile dirs=\"%v\"\n",dirs)
+	}
+	return &dirs,nil
 }
 
 func (v *Vault) isDir(dir *fuse.DirEntry) bool {
