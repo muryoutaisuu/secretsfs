@@ -274,7 +274,7 @@ func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 	dirs := []fuse.DirEntry{}
 	for k := range data {
 		d := fuse.DirEntry{
-			Name:  data[k].(string),
+			Name: k,
 			Mode: fuse.S_IFREG,
 		}
 		dirs = append(dirs, d)
