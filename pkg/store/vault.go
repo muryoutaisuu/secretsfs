@@ -51,9 +51,9 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 
 	// opening directory (aka secretsfiles/)
 	if name == "" {
-    return &fuse.Attr{
-      Mode: fuse.S_IFDIR | 0550,
-    }, fuse.OK
+		return &fuse.Attr{
+			Mode: fuse.S_IFDIR | 0550,
+		}, fuse.OK
 	}
 
 	// get type
@@ -65,18 +65,18 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 	switch t {
 	case CTrueDir:
 		return &fuse.Attr{
-      Mode: fuse.S_IFDIR | 0550,
-    }, fuse.OK
+			Mode: fuse.S_IFDIR | 0550,
+		}, fuse.OK
 	case CFile:
 		Log.Debug.Printf("op=GetAttr t=CFile\n")
 		return &fuse.Attr{
-      Mode: fuse.S_IFDIR | 0550,
-    }, fuse.OK
+			Mode: fuse.S_IFDIR | 0550,
+		}, fuse.OK
 	case CValue:
 		return &fuse.Attr{
-      Mode: fuse.S_IFREG | 0550,
+			Mode: fuse.S_IFREG | 0550,
 			Size: uint64(len(name)),
-    }, fuse.OK
+		}, fuse.OK
 	default:
 		return nil, fuse.ENOENT
 	}
