@@ -258,8 +258,8 @@ func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 			Mode: fuse.S_IFREG,
 		}
 		dirs = append(dirs, d)
-		Log.Debug.Printf("op=listFile dirs=\"%v\"\n",dirs)
 	}
+	Log.Debug.Printf("op=listFile dirs=\"%v\"\n",dirs)
 	return &dirs,nil
 }
 
