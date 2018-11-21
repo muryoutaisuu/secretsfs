@@ -26,7 +26,7 @@ const (
 )
 
 // Filetype define the type of the returned value element of vault
-type Filetype int
+type Filetype byte
 const (
 	CTrueDir   Filetype = 0 // exists in Vault as a directory
 	CFile      Filetype = 1 // Key of a key=value pair, emulated as a directory
