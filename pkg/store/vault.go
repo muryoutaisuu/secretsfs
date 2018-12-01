@@ -50,6 +50,7 @@ type Vault struct {
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	Log.Debug.Printf("ops=GetAttr name=\"%v\"\n",name)
 	Log.Debug.Printf("ops=GetAttr MTDATA=%s",viper.GetString("MTDATA"))
+	Log.Debug.Printf("ops=GetAttr Token=%s",v.client.Token())
 	//name = MTDATA + name
 
 	// opening directory (aka secretsfiles/)
@@ -58,6 +59,12 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 			Mode: fuse.S_IFDIR | 0550,
 		}, fuse.OK
 	}
+
+	if err := v.setToken(context); err != nil {
+		Log.Error.Print(err)
+		return nil, fuse.EACCES
+	}
+	defer v.client.ClearToken()
 
 	// get type
 	Log.Debug.Printf("name=\"%v\"\n",name)
@@ -87,6 +94,13 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 
 func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
 	Log.Debug.Printf("GetAttr name=\"%v\"\n",name)
+
+	if err := v.setToken(context); err != nil {
+		Log.Error.Print(err)
+		return nil, fuse.EACCES
+	}
+	defer v.client.ClearToken()
+
 	_,t := v.getType(name)
 	Log.Debug.Printf("ops=OpenDir t=\"%v\"\n",t)
 
@@ -116,6 +130,13 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 
 func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
 	Log.Debug.Printf("op=Open name=\"%v\"\n",name)
+
+	if err := v.setToken(context); err != nil {
+		Log.Error.Print(err)
+		return nil, fuse.EACCES
+	}
+	defer v.client.ClearToken()
+
 	s,t := v.getType(name)
 	Log.Debug.Printf("op=Open t=\"%v\"\n",t)
 
@@ -174,6 +195,10 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 	}
 	Log.Debug.Printf("login_payload=%v\n",postdata)
 	resp,err := v.client.Logical().Write("auth/approle/login", postdata)
+	if err != nil {
+		Log.Error.Printf("op=getAccessToken msg=\"Got an error while authenticating\"\n")
+		return nil,err
+	}
 	Log.Debug.Printf("resp=%v Data=%v\n ClientToken=\"%v\"\n",resp,resp.Data,resp.Auth.ClientToken)
 	if err != nil {
 		Log.Error.Print(err)
@@ -322,6 +347,7 @@ func init() {
 	v := Vault{
 		client: c,
 	}
+	v.client.ClearToken()
 	RegisterStore(&v) //https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
 	Log.Debug.Printf("op=init MTDATA=%s",viper.GetString("MTDATA"))
 	MTDATA = viper.GetString("MTDATA")
