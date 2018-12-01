@@ -9,6 +9,7 @@ import (
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
 
+	"github.com/Muryoutaisuu/secretsfs/cmd/secretsfs/config"
 	"github.com/Muryoutaisuu/secretsfs/pkg/fio"
 	"github.com/Muryoutaisuu/secretsfs/pkg/store"
 	"github.com/Muryoutaisuu/secretsfs/pkg/secretsfs"
@@ -44,3 +45,7 @@ func usage() {
 	flag.PrintDefaults()
 }
 
+func init() {
+	config := config.GetConfigDefaults()
+	log.Printf("Default Configs: \n%s",config)
+}

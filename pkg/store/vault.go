@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"io/ioutil"
 	"path/filepath"
-	"os"
+	//"os"
 	"os/user"
 	"strings"
 	"path"
@@ -17,13 +17,15 @@ import (
 	"github.com/hashicorp/vault/api"
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
+	"github.com/spf13/viper"
 )
 
-const (
-	// taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
-	MTDATA = "secret/metadata/"
-	DTDATA = "secret/data/"
-)
+// Path internals of vault made configurable with viper
+// taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
+var MTDATA string
+var DTDATA string
+//var MTDATA = viper.GetString("MTDATA")
+//var DTDATA = viper.GetString("DTDATA")
 
 // Filetype define the type of the returned value element of vault
 type Filetype byte
@@ -47,6 +49,7 @@ type Vault struct {
 
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	Log.Debug.Printf("ops=GetAttr name=\"%v\"\n",name)
+	Log.Debug.Printf("ops=GetAttr MTDATA=%s",viper.GetString("MTDATA"))
 	//name = MTDATA + name
 
 	// opening directory (aka secretsfiles/)
@@ -196,7 +199,8 @@ func (v *Vault) secret(u *user.User) (*api.Secret, error) {
 }
 
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
-	path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
+	// path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
+	path := filepath.Join(u.HomeDir, viper.GetString("FILE_ROLEID"))
 	Log.Debug.Printf("msg=\"reading authToken\" path=\"%v\"\n",path)
 	o,err := ioutil.ReadFile(path)
 	if err != nil {
@@ -283,6 +287,7 @@ func (v *Vault) isDir(dir *fuse.DirEntry) bool {
 func (v *Vault) getType(name string) (*api.Secret, Filetype){
 	Log.Debug.Printf("op=getType name=\"%v\"\n",name)
 	s,err := v.client.Logical().List(MTDATA + name)
+	Log.Debug.Printf("op=getType MTDATA=%s",MTDATA)
 	Log.Debug.Printf("op=getType s=\"%v\" err=\"%v\"\n",s,err)
 	if err == nil && s != nil {
 		return s, CTrueDir
@@ -308,7 +313,8 @@ func (v *Vault) getType(name string) (*api.Secret, Filetype){
 
 func init() {
 	c,err := api.NewClient(&api.Config{
-		Address: os.Getenv("VAULT_ADDR"),
+		// Address: os.Getenv("VAULT_ADDR"),
+		Address: viper.GetString("VAULT_ADDR"),
 	})
 	if err != nil {
 		Log.Error.Fatal(err)
@@ -317,5 +323,8 @@ func init() {
 		client: c,
 	}
 	RegisterStore(&v) //https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
+	Log.Debug.Printf("op=init MTDATA=%s",viper.GetString("MTDATA"))
+	MTDATA = viper.GetString("MTDATA")
+	DTDATA = viper.GetString("DTDATA")
 }
 

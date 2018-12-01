@@ -4,7 +4,7 @@ import (
 	"github.com/Muryoutaisuu/secretsfs/pkg/sfslog"
 )
 
-// stores contains all registered Stores
+// store contains the registered Store
 var store Store
 
 // Log contains all the needed Loggers
