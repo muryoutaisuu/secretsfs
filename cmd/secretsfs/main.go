@@ -17,7 +17,14 @@ import (
 
 func main() {
 	flag.Usage = usage
+	var defaults = flag.Bool("print-defaults", false, "prints default configurations")
 	flag.Parse()
+
+	if *defaults {
+		config := config.GetConfigDefaults()
+		log.Printf("Default Configs: \n%s",config)
+		os.Exit(0)
+	}
 
 	if flag.NArg() != 1 {
 		usage()
@@ -43,9 +50,4 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "  %s MOUNTPOINT\n", os.Args[0])
 	flag.PrintDefaults()
-}
-
-func init() {
-	config := config.GetConfigDefaults()
-	log.Printf("Default Configs: \n%s",config)
 }
