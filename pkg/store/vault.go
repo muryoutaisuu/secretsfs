@@ -183,7 +183,7 @@ func (v *Vault) setToken(context *fuse.Context) error {
 	}
 	v.client.SetToken(a.Auth.ClientToken)
 	// TODO: Remove this debug line, not secure!!
-	Log.Debug.Print(v.client.Token())
+	Log.Debug.Printf("op=setToken msg=\"successfully set token\" token=%s\"\n",v.client.Token())
 	return nil
 }
 
