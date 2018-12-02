@@ -17,6 +17,10 @@ var configDefaults = []byte(`
 # CONFIG_FILE: secretsfs  # without file type
 
 ### FIO
+ENABLED_FIOS:
+- secretsfiles
+- templatefiles
+
 # templatefiles
 PATH_TO_TEMPLATES: /etc/secretsfs/templates/
 

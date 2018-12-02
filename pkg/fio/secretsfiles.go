@@ -3,6 +3,8 @@ package fio
 import (
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
+
+	"github.com/spf13/viper"
 )
 
 type FIOSecretsfiles struct {}
@@ -23,10 +25,14 @@ func (t *FIOSecretsfiles) Open(name string, flags uint32, context *fuse.Context)
 
 
 func init() {
-	fm := FIOMap {
-		MountPath: "secretsfiles",
-		Provider: &FIOSecretsfiles{},
-	}
+	name := "secretsfiles"
+	fios := viper.GetStringMap("ENABLED_FIOS")
+	if _,ok := fios[name]; ok {
+		fm := FIOMap {
+			MountPath: name,
+			Provider: &FIOSecretsfiles{},
+		}
 
-	RegisterProvider(&fm)
+		RegisterProvider(&fm)
+	}
 }
