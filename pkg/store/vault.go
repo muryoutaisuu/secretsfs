@@ -327,7 +327,7 @@ func (v *Vault) getType(name string) (*api.Secret, Filetype){
 
 
 func init() {
-	if viper.GetString("CURRENT_STORE") == "vault" {
+	if viper.GetString("CURRENT_STORE") == "Vault" {
 		c,err := api.NewClient(&api.Config{
 			// Address: os.Getenv("VAULT_ADDR"),
 			Address: viper.GetString("VAULT_ADDR"),

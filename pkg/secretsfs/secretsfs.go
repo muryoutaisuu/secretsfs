@@ -3,6 +3,7 @@ package secretsfs
 // after the example: https://github.com/hanwen/go-fuse/blob/master/example/hello/main.go
 
 import (
+	"errors"
 	"strings"
 	"path/filepath"
 
@@ -24,6 +25,9 @@ type SecretsFS struct {
 }
 
 func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap, s store.Store) (*SecretsFS, error) {
+	if s == nil {
+		return nil, errors.New("could not initialize store, store is nil!")
+	}
 	sfs := SecretsFS{
 		FileSystem: fs,
 		fms: fms,

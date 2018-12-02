@@ -21,7 +21,7 @@ var configDefaults = []byte(`
 PATH_TO_TEMPLATES: /etc/secretsfs/templates/
 
 ### STORE
-CURRENT_STORE: vault
+CURRENT_STORE: Vault
 
 # vault
 FILE_ROLEID: .vault-roleid
@@ -64,7 +64,7 @@ func InitConfig() {
 	}
 
 	// read configuration from config files
-	err := viper.ReadInConfig() // Find and read the config files
+	err := viper.MergeInConfig() // Find and read the config files
 	if err != nil { // Handle errors reading the config file
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
