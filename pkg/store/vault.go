@@ -24,8 +24,6 @@ import (
 // taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
 var MTDATA string
 var DTDATA string
-//var MTDATA = viper.GetString("MTDATA")
-//var DTDATA = viper.GetString("DTDATA")
 
 // Filetype define the type of the returned value element of vault
 type Filetype byte
@@ -42,6 +40,9 @@ const (
 //	Secret_id string `yaml:"secret_id"`
 //}
 
+// Vault struct implements the calls called by fuse and returns accordingly
+// requested resources.
+// it's a store and may be coupled with multiple fio structs
 type Vault struct {
 	client *api.Client
 	//TokenAuth *api.Client.Auth().Token()
@@ -168,7 +169,14 @@ func (v *Vault) String() (string) {
 
 
 
-
+// setToken is called within the fuse interaction calls and sets a working
+// accesstoken depending on the calling user
+// usually should be used in conjunction to a deferred clear call:
+// if err := v.setToken(context); err != nil {
+// 	Log.Error.Print(err)
+// 	return nil, fuse.EACCES
+// }
+// defer v.client.ClearToken()
 func (v *Vault) setToken(context *fuse.Context) error {
 	u,err := user.LookupId(strconv.Itoa(int(context.Owner.Uid)))
 	if err != nil {
@@ -179,10 +187,14 @@ func (v *Vault) setToken(context *fuse.Context) error {
 		return err
 	}
 	v.client.SetToken(a.Auth.ClientToken)
+	// TODO: Remove this debug line, not secure!!
 	Log.Debug.Print(v.client.Token())
 	return nil
 }
 
+// getAccessToken reads the currently set authentication token inside of the
+// users home and authenticates with it and returns afterwards the secret
+// containing the accesstoken
 func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 	auth,err := v.readAuthToken(u)
 	if err != nil {
@@ -210,19 +222,7 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 	return resp,err
 }
 
-func (v *Vault) secret(u *user.User) (*api.Secret, error) {
-	authToken,err := v.readAuthToken(u)
-	if err != nil {
-		Log.Error.Print(err)
-		return &api.Secret{}, err
-	}
-	c := v.client
-	auth := c.Auth()
-	tokenauth := auth.Token()
-	secret,err := tokenauth.Lookup(authToken)
-	return secret,err
-}
-
+// readAuthToken opens the file containing the authenticationtoken and trimps it
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	// path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
 	path := filepath.Join(u.HomeDir, viper.GetString("FILE_ROLEID"))
@@ -237,6 +237,7 @@ func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	return authToken,nil
 }
 
+// listDir lists all entries inside a vault directory type=CTrueDir
 func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 	Log.Debug.Printf("op=listDir MTDATA=\"%v\" name=\"%v\"",MTDATA,name)
 	s,err := v.client.Logical().List(MTDATA + name)
@@ -245,9 +246,9 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 	// can't list in vault
 	if err != nil || s == nil {
 		if err == nil {
-			err = errors.New("cant list")
+			err = errors.New("cant list path "+MTDATA+name+" in vault")
 		}
-		Log.Debug.Print(err)
+		Log.Error.Print(err)
 		return nil, err
 	}
 
@@ -267,6 +268,10 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 	return &dirs,nil
 }
 
+// listFile lists the contents of a virtual directory in secretsfs
+// (aka a file in vault) type=CFile
+// returns a Slice containing all valid entries
+// valid means no entries containing a / in their names
 func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 	s,err := v.client.Logical().Read(DTDATA + name)
 	if err != nil || s == nil {
@@ -281,6 +286,10 @@ func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 	Log.Debug.Printf("op=listFile data=\"%v\" dataType=\"%T\"\n",data,data)
 	dirs := []fuse.DirEntry{}
 	for k := range data {
+		// skip entries that contain a / in their names
+		if strings.Contains(k,"/") {
+			continue
+		}
 		d := fuse.DirEntry{
 			Name: k,
 			//Name: data[k].(string),
@@ -292,23 +301,9 @@ func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 	return &dirs,nil
 }
 
-func (v *Vault) isDir(dir *fuse.DirEntry) bool {
-	name := dir.Name
-	if name[len(name)-1:] == "/" {
-		Log.Debug.Printf("isDir=true\n")
-		return true
-	}
-	// if err is nil, then lookup in vault worked regularly
-	// that means, it is a true directory in vault
-	if _,err := v.listDir(name); err == nil {
-		Log.Debug.Printf("isDir=true\n")
-		return true
-	}
-	Log.Debug.Printf("isDir=false\n")
-	return false
-}
-
-
+// getType returns type of the requested resource
+// used by most fuse actions for simplifying reasons
+// types may be the defined FileType byte constants on top of this file
 func (v *Vault) getType(name string) (*api.Secret, Filetype){
 	Log.Debug.Printf("op=getType name=\"%v\"\n",name)
 	s,err := v.client.Logical().List(MTDATA + name)
