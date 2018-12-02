@@ -332,20 +332,22 @@ func (v *Vault) getType(name string) (*api.Secret, Filetype){
 
 
 func init() {
-	c,err := api.NewClient(&api.Config{
-		// Address: os.Getenv("VAULT_ADDR"),
-		Address: viper.GetString("store.vault.VAULT_ADDR"),
-	})
-	if err != nil {
-		Log.Error.Fatal(err)
+	if viper.GetString("store.current") == "vault" {
+		c,err := api.NewClient(&api.Config{
+			// Address: os.Getenv("VAULT_ADDR"),
+			Address: viper.GetString("store.vault.VAULT_ADDR"),
+		})
+		if err != nil {
+			Log.Error.Fatal(err)
+		}
+		v := Vault{
+			client: c,
+		}
+		v.client.ClearToken()
+		RegisterStore(&v) //https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
+		Log.Debug.Printf("op=init MTDATA=%s",viper.GetString("store.vault.MTDATA"))
+		MTDATA = viper.GetString("store.vault.MTDATA")
+		DTDATA = viper.GetString("store.vault.DTDATA")
 	}
-	v := Vault{
-		client: c,
-	}
-	v.client.ClearToken()
-	RegisterStore(&v) //https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
-	Log.Debug.Printf("op=init MTDATA=%s",viper.GetString("store.vault.MTDATA"))
-	MTDATA = viper.GetString("store.vault.MTDATA")
-	DTDATA = viper.GetString("store.vault.DTDATA")
 }
 
