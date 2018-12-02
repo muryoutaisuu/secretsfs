@@ -20,9 +20,10 @@ func main() {
 	var defaults = flag.Bool("print-defaults", false, "prints default configurations")
 	flag.Parse()
 
+	// print default configs
 	if *defaults {
 		config := config.GetConfigDefaults()
-		log.Printf("Default Configs: \n%s",config)
+		fmt.Printf("Default Configs: \n%s",config)
 		os.Exit(0)
 	}
 
