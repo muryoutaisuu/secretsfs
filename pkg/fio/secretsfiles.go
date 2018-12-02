@@ -27,11 +27,11 @@ func (t *FIOSecretsfiles) Open(name string, flags uint32, context *fuse.Context)
 
 
 func init() {
-       fm := FIOMap {
-             MountPath: "secretsfiles",
-             Provider: &FIOSecretsfiles{},
-       }
-			 sto = store.GetStore()
-       
-       RegisterProvider(&fm)
+	fm := FIOMap {
+		MountPath: "secretsfiles",
+		Provider: &FIOSecretsfiles{},
+	}
+	sto = store.GetStore()
+
+	RegisterProvider(&fm)
 }
