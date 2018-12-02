@@ -10,12 +10,16 @@ import (
 // Default configurations
 var configDefaults = []byte(`
 ---
-vault:
-  FILE_ROLEID: .vault-roleid
-  VAULT_ADDR: http://127.0.0.1:8200
-  # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
-  MTDATA: secret/metadata/
-  DTDATA: secret/data/
+fio:
+  templatefiles:
+    PATH_TO_TEMPLATES: /etc/secretsfs/templates/
+store:
+  vault:
+    FILE_ROLEID: .vault-roleid
+    VAULT_ADDR: http://127.0.0.1:8200
+    # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
+    MTDATA: secret/metadata/
+    DTDATA: secret/data/
 `)
 
 // https://github.com/spf13/viper#reading-config-files

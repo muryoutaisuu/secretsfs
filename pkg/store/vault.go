@@ -50,7 +50,7 @@ type Vault struct {
 
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	Log.Debug.Printf("ops=GetAttr name=\"%v\"\n",name)
-	Log.Debug.Printf("ops=GetAttr MTDATA=%s",viper.GetString("vault.MTDATA"))
+	Log.Debug.Printf("ops=GetAttr MTDATA=%s",viper.GetString("store.vault.MTDATA"))
 	Log.Debug.Printf("ops=GetAttr Token=%s",v.client.Token())
 	//name = MTDATA + name
 
@@ -225,7 +225,7 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 // readAuthToken opens the file containing the authenticationtoken and trimps it
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	// path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
-	path := filepath.Join(u.HomeDir, viper.GetString("vault.FILE_ROLEID"))
+	path := filepath.Join(u.HomeDir, viper.GetString("store.vault.FILE_ROLEID"))
 	Log.Debug.Printf("msg=\"reading authToken\" path=\"%v\"\n",path)
 	o,err := ioutil.ReadFile(path)
 	if err != nil {
@@ -334,7 +334,7 @@ func (v *Vault) getType(name string) (*api.Secret, Filetype){
 func init() {
 	c,err := api.NewClient(&api.Config{
 		// Address: os.Getenv("VAULT_ADDR"),
-		Address: viper.GetString("vault.VAULT_ADDR"),
+		Address: viper.GetString("store.vault.VAULT_ADDR"),
 	})
 	if err != nil {
 		Log.Error.Fatal(err)
@@ -344,8 +344,8 @@ func init() {
 	}
 	v.client.ClearToken()
 	RegisterStore(&v) //https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
-	Log.Debug.Printf("op=init MTDATA=%s",viper.GetString("vault.MTDATA"))
-	MTDATA = viper.GetString("vault.MTDATA")
-	DTDATA = viper.GetString("vault.DTDATA")
+	Log.Debug.Printf("op=init MTDATA=%s",viper.GetString("store.vault.MTDATA"))
+	MTDATA = viper.GetString("store.vault.MTDATA")
+	DTDATA = viper.GetString("store.vault.DTDATA")
 }
 
