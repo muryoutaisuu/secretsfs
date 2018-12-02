@@ -14,6 +14,7 @@ fio:
   templatefiles:
     PATH_TO_TEMPLATES: /etc/secretsfs/templates/
 store:
+  current: vault
   vault:
     FILE_ROLEID: .vault-roleid
     VAULT_ADDR: http://127.0.0.1:8200
@@ -35,10 +36,22 @@ func InitConfig() {
 	// read automatically all envs with Prefix SFS_
 	viper.SetEnvPrefix("SFS")
 	viper.AutomaticEnv()
-	// also read vault addr env
-	// needs both parameters, else prefix would be prefixed
-	viper.BindEnv("VAULT_ADDR","VAULT_ADDR")
 
+	// set alias for some different things
+	// fio things
+	viper.RegisterAlias("fio.templatefiles.PATH_TO_TEMPLATES","PATH_TO_TEMPLATES")
+
+	// store things
+	viper.RegisterAlias("store.current","STORE")
+
+	// also read vault addr env
+	// needs both parameters for BindEnv, else prefix would be prefixed
+	viper.BindEnv("store.vault.VAULT_ADDR","VAULT_ADDR")
+	viper.RegisterAlias("store.vault.MTDATA","MTDATA")
+	viper.RegisterAlias("store.vault.DTDATA","DTDATA")
+	viper.RegisterAlias("store.vault.FILE_ROLEID","FILE_ROLEID")
+
+	// read config file
 	viper.SetConfigType("yaml")
 	viper.ReadConfig(bytes.NewBuffer(configDefaults))
 }
