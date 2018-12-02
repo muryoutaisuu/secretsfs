@@ -18,6 +18,7 @@ import (
 func main() {
 	flag.Usage = usage
 	var defaults = flag.Bool("print-defaults", false, "prints default configurations")
+	//var opts = flag.String("o","","passed through to fuse")
 	flag.Parse()
 
 	if *defaults {
@@ -26,7 +27,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	if flag.NArg() != 1 {
+	log.Printf("flags are: %s\n",flag.Args())
+	if flag.NArg() < 1 {
 		usage()
 		os.Exit(2)
 	}
@@ -42,7 +44,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Mount fail: %v\n", err)
 	}
+	log.Printf("server: %s\n",server)
 
+	//server.opts.AllowOther = true
 	server.Serve()
 }
 
