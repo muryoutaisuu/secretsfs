@@ -1,10 +1,12 @@
 vault server -dev &
 export VAULT_ADDR='http://127.0.0.1:8200'
+echo export VAULT_ADDR='http://127.0.0.1:8200' > sourceit
 sleep 1
 echo -n "type in root token: "
 read ROOT
 export VAULT_TOKEN="$ROOT"
-echo "export ROOTTOKEN=$VAULT_TOKEN" > sourceit
+echo export VAULT_TOKEN="$ROOT" >> sourceit
+echo "export ROOTTOKEN=$VAULT_TOKEN" >> sourceit
 vault kv put secret/hello foo=world
 vault kv put secret/subdir/mury foo2=world2 bar2=natii
 vault auth enable approle
@@ -15,6 +17,7 @@ echo -n "type in roleid: "
 read ROLEID
 export ROLEID
 echo "$ROLEID" > /root/.vault-roleid
+#echo "$ROLEID" > /home/muryoutaisuu/.vault-roleid
 echo "export ROLEID=$ROLEID" >> sourceit
 vault write auth/approle/login role_id=$ROLEID
 echo -n "type in root approle token:"
@@ -25,6 +28,6 @@ echo "export VAULT_TOKEN=$ROLETOKEN" >> sourceit
 vault kv list secret
 vault kv get secret/hello
 vault kv get secret/subdir/mury
-echo "export SECRETSFS_FILE_ROLEID='.vault-roleid'" >> sourceit
-echo "export VAULT_ADDR='http://127.0.0.1:8200'" >> sourceit
+#echo "export SECRETSFS_FILE_ROLEID='.vault-roleid'" >> sourceit
+#echo "export VAULT_ADDR='http://127.0.0.1:8200'" >> sourceit
 
