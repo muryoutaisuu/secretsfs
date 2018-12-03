@@ -26,13 +26,15 @@ func (t *FIOSecretsfiles) Open(name string, flags uint32, context *fuse.Context)
 
 func init() {
 	name := "secretsfiles"
-	fios := viper.GetStringMap("ENABLED_FIOS")
-	if _,ok := fios[name]; ok {
-		fm := FIOMap {
-			MountPath: name,
-			Provider: &FIOSecretsfiles{},
-		}
+	fios := viper.GetStringSlice("ENABLED_FIOS")
+	for _,f := range fios {
+		if f == name {
+			fm := FIOMap {
+				MountPath: name,
+				Provider: &FIOSecretsfiles{},
+			}
 
-		RegisterProvider(&fm)
+			RegisterProvider(&fm)
+		}
 	}
 }
