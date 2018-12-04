@@ -60,7 +60,9 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 		Log.Error.Print(err)
 		return nil, fuse.EACCES
 	}
+	defer Log.Debug.Printf("op=GetAttr msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 	defer v.client.ClearToken()
+	defer Log.Debug.Printf("op=GetAttr msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 
 	// get type
 	Log.Debug.Printf("name=\"%v\"\n",name)
@@ -95,6 +97,7 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 		Log.Error.Print(err)
 		return nil, fuse.EACCES
 	}
+	defer Log.Debug.Printf("op=OpenDir msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 	defer v.client.ClearToken()
 
 	_,t := v.getType(name)
@@ -131,6 +134,7 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.F
 		Log.Error.Print(err)
 		return nil, fuse.EACCES
 	}
+	defer Log.Debug.Printf("op=Open msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 	defer v.client.ClearToken()
 
 	s,t := v.getType(name)
