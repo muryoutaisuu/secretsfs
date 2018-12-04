@@ -1,4 +1,4 @@
-kill $(ps -ef | grep "vault server" | grep -v "grep" | cut -d' ' -f8) # kill old instance
+pkill vault
 vault server -dev &
 export VAULT_ADDR='http://127.0.0.1:8200'
 echo export VAULT_ADDR='http://127.0.0.1:8200' > sourceit
@@ -10,6 +10,7 @@ echo export VAULT_TOKEN="$ROOT" >> sourceit
 echo "export ROOTTOKEN=$VAULT_TOKEN" >> sourceit
 vault kv put secret/hello foo=world
 vault kv put secret/subdir/mury foo2=world2 bar2=natii
+vault kv put secret/hello2 my/bad/key=my/bad/value mynormalkey=mynormalvalue "my key"="my value" "my second key"="my second value"
 vault auth enable approle
 vault policy write mury vault-policy-mury.txt
 vault write auth/approle/role/root policies=default,mury bind_secret_id=false token_bound_cidrs=127.0.0.1/24
