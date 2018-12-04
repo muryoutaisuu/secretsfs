@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"bytes"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -69,8 +70,8 @@ func InitConfig() {
 
 	// read configuration from config files
 	err := viper.MergeInConfig() // Find and read the config files
-	if err != nil { // Handle errors reading the config file
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	if err != nil && !strings.Contains(err.Error(), "Config File") && !strings.Contains(err.Error(), "Not Found in") { // Handle errors reading the config file
+		panic(fmt.Errorf("%s\n", err))
 	}
 }
 
