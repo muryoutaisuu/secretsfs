@@ -1,3 +1,4 @@
+kill $(ps -ef | grep "vault server" | grep -v "grep" | cut -d' ' -f8) # kill old instance
 vault server -dev &
 export VAULT_ADDR='http://127.0.0.1:8200'
 echo export VAULT_ADDR='http://127.0.0.1:8200' > sourceit
