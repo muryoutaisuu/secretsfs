@@ -39,11 +39,11 @@ func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap, s store.Stor
 func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	root, subpath := rootName(name)
 	Log.Debug.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n",name,root,subpath)
-	if _,ok := sfs.fms[root]; ok {
-		return sfs.store.GetAttr(subpath, context)
-	}
 	if root == "" && subpath == "" {
 		return &fuse.Attr{Mode: fuse.S_IFDIR | 0755,}, fuse.OK
+	}
+	if _,ok := sfs.fms[root]; ok {
+		return sfs.fms[root].Provider.GetAttr(subpath, context)
 	}
 	return &fuse.Attr{}, fuse.ENOENT
 }
@@ -51,9 +51,6 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
 	root, subpath := rootName(name)
 	Log.Debug.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n",name,root,subpath)
-	if _,ok := sfs.fms[root]; ok {
-		return sfs.fms[root].Provider.OpenDir(subpath, context)
-	}
 	if name == "" {
 		c = []fuse.DirEntry{}
 		for k := range sfs.fms {
@@ -61,12 +58,18 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 		}
 		return c, fuse.OK
 	}
+	if _,ok := sfs.fms[root]; ok {
+		return sfs.fms[root].Provider.OpenDir(subpath, context)
+	}
 	return nil, fuse.ENOENT
 }
 
 func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	root, subpath := rootName(name)
 	Log.Debug.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n",name,root,subpath)
+	if name == "" {
+		return nil, fuse.EINVAL
+	}
 	if _,ok := sfs.fms[root]; ok {
 		return sfs.fms[root].Provider.Open(subpath, flags, context)
 	}
