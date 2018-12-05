@@ -16,7 +16,6 @@ import (
 
 	"github.com/hashicorp/vault/api"
 	"github.com/hanwen/go-fuse/fuse"
-	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/spf13/viper"
 
 	"github.com/Muryoutaisuu/secretsfs/pkg/sfshelpers"
@@ -129,12 +128,12 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 	return nil, fuse.ENOENT
 }
 
-func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
+func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, fuse.Status) {
 	Log.Debug.Printf("op=Open name=\"%v\"\n",name)
 
 	if err := v.setToken(context); err != nil {
 		Log.Error.Print(err)
-		return nil, fuse.EACCES
+		return "", fuse.EACCES
 	}
 	defer Log.Debug.Printf("op=Open msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 	defer v.client.ClearToken()
@@ -144,31 +143,31 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.F
 
 	switch t {
 	case CTrueDir:
-		return nil, fuse.EISDIR
+		return "", fuse.EISDIR
 	case CFile:
-		return nil, fuse.EISDIR
+		return "", fuse.EISDIR
 	case CValue:
 		// get substituted value (if substitution must be done, else keep original)
 		Log.Debug.Printf("op=Open msg=\"before substituting name\" variable=name value=%v\n",name)
 		name, _, err := v.getCorrectName(name, true)
 		if err != nil {
 			Log.Error.Print(err)
-			return nil, fuse.EIO
+			return "", fuse.EIO
 		}
 		Log.Debug.Printf("op=Open msg=\"after substituting name\" variable=name value=%v\n",name)
 
 		Log.Debug.Printf("op=Open s=\"%v\" name=\"%v\"\n",s,name)
 		data,ok := s.Data["data"].(map[string]interface{})
 		if ok != true {
-			return nil, fuse.EIO
+			return "", fuse.EIO
 		}
 		entry,ok := data[name].(string)
 		if ok != true {
-			return nil, fuse.EIO
+			return "", fuse.EIO
 		}
-		return nodefs.NewDataFile([]byte(entry)), fuse.OK
+		return entry, fuse.OK
 	}
-	return nil, fuse.ENOENT
+	return "", fuse.ENOENT
 }
 
 func (v *Vault) String() (string) {

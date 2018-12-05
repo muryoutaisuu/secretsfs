@@ -18,7 +18,11 @@ func (t *FIOSecretsfiles) OpenDir(name string, context *fuse.Context) ([]fuse.Di
 }
 
 func (t *FIOSecretsfiles) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
-	return sto.Open(name, flags, context)
+	content, status := sto.Open(name, flags, context)
+	if status == fuse.OK && content != "" {
+		return  nodefs.NewDataFile([]byte(content)), status
+	}
+	return nil, status
 }
 
 
