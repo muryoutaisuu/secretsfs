@@ -6,6 +6,7 @@ import (
 	"os"
 	"io"
 	//"io/ioutil"
+	// TODO: make debug configurable
 )
 
 type Log struct {
@@ -19,6 +20,7 @@ func Logger() *Log {
 	var l Log
 	// log setup
 	logInit(&l, os.Stdout, os.Stdout, os.Stdout, os.Stderr)
+	//logInit(&l, ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 	return &l
 }
 

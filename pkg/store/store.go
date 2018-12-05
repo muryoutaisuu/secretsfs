@@ -2,10 +2,15 @@ package store
 
 import (
 	"github.com/Muryoutaisuu/secretsfs/pkg/sfslog"
+	"github.com/spf13/viper"
+	//"github.com/Muryoutaisuu/secretsfs/cmd/secretsfs/config"
 )
 
 // store contains the registered Store
 var store Store
+
+// available stores
+var stores []string
 
 // Log contains all the needed Loggers
 var Log *sfslog.Log = sfslog.Logger()
@@ -15,9 +20,25 @@ func GetStore() Store {
 	return store
 }
 
-// RegisterStore function registers Stores.
-// It is called from within the init() Function of other Store Implementations.
+// RegisterStore registers available stores
+// if a store is also set to be the backend store it will be set here
 func RegisterStore(s Store) {
-	store = s
+	stores = append(stores, s.String())
+	if viper.GetString("CURRENT_STORE") == s.String() {
+		store = s
+	}
 }
 
+// GetStores returns all registered stores.
+// Registered stores are all available stores that a user may configure as a
+// store of secretsfs
+func GetStores() []string {
+	return stores
+}
+
+
+
+
+func init() {
+	stores = []string{}
+}

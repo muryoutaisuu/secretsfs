@@ -16,16 +16,15 @@ import (
 
 	"github.com/hashicorp/vault/api"
 	"github.com/hanwen/go-fuse/fuse"
-	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/spf13/viper"
+
+	"github.com/Muryoutaisuu/secretsfs/pkg/sfshelpers"
 )
 
 // Path internals of vault made configurable with viper
 // taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
 var MTDATA string
 var DTDATA string
-//var MTDATA = viper.GetString("MTDATA")
-//var DTDATA = viper.GetString("DTDATA")
 
 // Filetype define the type of the returned value element of vault
 type Filetype byte
@@ -37,11 +36,9 @@ const (
 )
 
 
-//type authParameter struct {
-//	Role_id string `yaml:"role_id"`
-//	Secret_id string `yaml:"secret_id"`
-//}
-
+// Vault struct implements the calls called by fuse and returns accordingly
+// requested resources.
+// it's a store and may be coupled with multiple fio structs
 type Vault struct {
 	client *api.Client
 	//TokenAuth *api.Client.Auth().Token()
@@ -64,7 +61,9 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 		Log.Error.Print(err)
 		return nil, fuse.EACCES
 	}
+	defer Log.Debug.Printf("op=GetAttr msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 	defer v.client.ClearToken()
+	defer Log.Debug.Printf("op=GetAttr msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 
 	// get type
 	Log.Debug.Printf("name=\"%v\"\n",name)
@@ -99,6 +98,7 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 		Log.Error.Print(err)
 		return nil, fuse.EACCES
 	}
+	defer Log.Debug.Printf("op=OpenDir msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 	defer v.client.ClearToken()
 
 	_,t := v.getType(name)
@@ -128,13 +128,14 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 	return nil, fuse.ENOENT
 }
 
-func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
+func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, fuse.Status) {
 	Log.Debug.Printf("op=Open name=\"%v\"\n",name)
 
 	if err := v.setToken(context); err != nil {
 		Log.Error.Print(err)
-		return nil, fuse.EACCES
+		return "", fuse.EACCES
 	}
+	defer Log.Debug.Printf("op=Open msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 	defer v.client.ClearToken()
 
 	s,t := v.getType(name)
@@ -142,23 +143,31 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.F
 
 	switch t {
 	case CTrueDir:
-		return nil, fuse.EISDIR
+		return "", fuse.EISDIR
 	case CFile:
-		return nil, fuse.EISDIR
+		return "", fuse.EISDIR
 	case CValue:
-		k := path.Base(name)
-		Log.Debug.Printf("op=Open s=\"%v\" k=\"%v\"\n",s,k)
+		// get substituted value (if substitution must be done, else keep original)
+		Log.Debug.Printf("op=Open msg=\"before substituting name\" variable=name value=%v\n",name)
+		name, _, err := v.getCorrectName(name, true)
+		if err != nil {
+			Log.Error.Print(err)
+			return "", fuse.EIO
+		}
+		Log.Debug.Printf("op=Open msg=\"after substituting name\" variable=name value=%v\n",name)
+
+		Log.Debug.Printf("op=Open s=\"%v\" name=\"%v\"\n",s,name)
 		data,ok := s.Data["data"].(map[string]interface{})
 		if ok != true {
-			return nil, fuse.EIO
+			return "", fuse.EIO
 		}
-		e,ok := data[k].(string)
+		entry,ok := data[name].(string)
 		if ok != true {
-			return nil, fuse.EIO
+			return "", fuse.EIO
 		}
-		return nodefs.NewDataFile([]byte(e)), fuse.OK
+		return entry, fuse.OK
 	}
-	return nil, fuse.ENOENT
+	return "", fuse.ENOENT
 }
 
 func (v *Vault) String() (string) {
@@ -168,7 +177,14 @@ func (v *Vault) String() (string) {
 
 
 
-
+// setToken is called within the fuse interaction calls and sets a working
+// accesstoken depending on the calling user
+// usually should be used in conjunction to a deferred clear call:
+// if err := v.setToken(context); err != nil {
+// 	Log.Error.Print(err)
+// 	return nil, fuse.EACCES
+// }
+// defer v.client.ClearToken()
 func (v *Vault) setToken(context *fuse.Context) error {
 	u,err := user.LookupId(strconv.Itoa(int(context.Owner.Uid)))
 	if err != nil {
@@ -179,10 +195,14 @@ func (v *Vault) setToken(context *fuse.Context) error {
 		return err
 	}
 	v.client.SetToken(a.Auth.ClientToken)
-	Log.Debug.Print(v.client.Token())
+	// TODO: Remove this debug line, not secure!!
+	Log.Debug.Printf("op=setToken msg=\"successfully set token\" token=%s\"\n",v.client.Token())
 	return nil
 }
 
+// getAccessToken reads the currently set authentication token inside of the
+// users home and authenticates with it and returns afterwards the secret
+// containing the accesstoken
 func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 	auth,err := v.readAuthToken(u)
 	if err != nil {
@@ -210,19 +230,7 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 	return resp,err
 }
 
-func (v *Vault) secret(u *user.User) (*api.Secret, error) {
-	authToken,err := v.readAuthToken(u)
-	if err != nil {
-		Log.Error.Print(err)
-		return &api.Secret{}, err
-	}
-	c := v.client
-	auth := c.Auth()
-	tokenauth := auth.Token()
-	secret,err := tokenauth.Lookup(authToken)
-	return secret,err
-}
-
+// readAuthToken opens the file containing the authenticationtoken and trimps it
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	// path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
 	path := filepath.Join(u.HomeDir, viper.GetString("FILE_ROLEID"))
@@ -237,6 +245,7 @@ func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	return authToken,nil
 }
 
+// listDir lists all entries inside a vault directory type=CTrueDir
 func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 	Log.Debug.Printf("op=listDir MTDATA=\"%v\" name=\"%v\"",MTDATA,name)
 	s,err := v.client.Logical().List(MTDATA + name)
@@ -245,9 +254,9 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 	// can't list in vault
 	if err != nil || s == nil {
 		if err == nil {
-			err = errors.New("cant list")
+			err = errors.New("cant list path "+MTDATA+name+" in vault")
 		}
-		Log.Debug.Print(err)
+		Log.Error.Print(err)
 		return nil, err
 	}
 
@@ -267,7 +276,38 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 	return &dirs,nil
 }
 
+// listFile lists the contents of a virtual directory in secretsfs
+// (aka a file in vault) type=CFile
+// returns a Slice containing all valid entries
+// valid means no entries containing a / in their names
 func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
+	data,err := v.listFileNames(name)
+	if err != nil {
+		return nil, err
+	}
+
+	dirs := []fuse.DirEntry{}
+	for k := range data {
+		key := data[k]
+		// special treatment for entries containing the substitution character
+		if strings.Contains(key, "/") { // viper.GetString("subst_char")) { // strings.Contains(k,"/") {
+			key = strings.Replace(key, "/", string(viper.GetString("subst_char")[0]), -1)
+		}
+
+		d := fuse.DirEntry{
+			Name: key,
+			Mode: fuse.S_IFREG,
+		}
+		dirs = append(dirs, d)
+	}
+	Log.Debug.Printf("op=listFile dirs=\"%v\"\n",dirs)
+	return &dirs,nil
+}
+
+// listFileNames is very similar to listFile, but instead of returning fully
+// finished fuse.DirEntry types, it only returns []string containing the keys
+func (v *Vault) listFileNames(name string) ([]string, error) {
+	Log.Debug.Printf("op=listFileNames msg=\"going to read data\" path=\"%s\"\n",DTDATA + name)
 	s,err := v.client.Logical().Read(DTDATA + name)
 	if err != nil || s == nil {
 		if err == nil {
@@ -277,38 +317,22 @@ func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 	}
 	Log.Debug.Printf("op=listFile secret=\"%v\"\n",s)
 	Log.Debug.Printf("op=listFile secret.Data=\"%v\" secret.DataType=\"%T\"\n",s.Data,s.Data)
-	data := s.Data["data"].(map[string]interface{})
-	Log.Debug.Printf("op=listFile data=\"%v\" dataType=\"%T\"\n",data,data)
-	dirs := []fuse.DirEntry{}
+	data,ok := s.Data["data"].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("s.Data[\"data\"] resulted in a error")
+	}
+	Log.Debug.Printf("op=listFileNames data=\"%v\" dataType=\"%T\"\n",data,data)
+
+  filenames := []string{}
 	for k := range data {
-		d := fuse.DirEntry{
-			Name: k,
-			//Name: data[k].(string),
-			Mode: fuse.S_IFREG,
-		}
-		dirs = append(dirs, d)
+		filenames = append(filenames, k)
 	}
-	Log.Debug.Printf("op=listFile dirs=\"%v\"\n",dirs)
-	return &dirs,nil
+	return filenames, nil
 }
 
-func (v *Vault) isDir(dir *fuse.DirEntry) bool {
-	name := dir.Name
-	if name[len(name)-1:] == "/" {
-		Log.Debug.Printf("isDir=true\n")
-		return true
-	}
-	// if err is nil, then lookup in vault worked regularly
-	// that means, it is a true directory in vault
-	if _,err := v.listDir(name); err == nil {
-		Log.Debug.Printf("isDir=true\n")
-		return true
-	}
-	Log.Debug.Printf("isDir=false\n")
-	return false
-}
-
-
+// getType returns type of the requested resource
+// used by most fuse actions for simplifying reasons
+// types may be the defined FileType byte constants on top of this file
 func (v *Vault) getType(name string) (*api.Secret, Filetype){
 	Log.Debug.Printf("op=getType name=\"%v\"\n",name)
 	s,err := v.client.Logical().List(MTDATA + name)
@@ -332,6 +356,56 @@ func (v *Vault) getType(name string) (*api.Secret, Filetype){
 	return nil, CNull
 }
 
+// getCorrectName checks whether a path contains any maybe substituted characters.
+// If yes, it checks in Vault whether there is a substituted key available and
+// returns it incl. whole path.
+// if only the Name itself is wished, set nameonly=true
+// if no value found, then throws an error and returns ""
+//
+// Why is there a nameonly=true ?
+// Problem being the fact, that with the original value in Vault the correct
+// path for getting the Secret from Vault may be quite tricky
+// e.g. the substituted value:  GET secret/my_bad_key
+// would become:                GET secret/my/bad/key
+// where a simple path.Base(path) won't return the secret's name anymore
+func (v *Vault) getCorrectName(pathname string, nameonly bool) (string, bool, error) {
+	value := pathname
+
+	// split if nameonly is true
+	if nameonly {
+		value = path.Base(pathname)
+	}
+
+	// check whether name contains any characters, that may be substituted
+	if !strings.Contains(value, viper.GetString("subst_char")) {
+		Log.Debug.Printf("op=getCorrectName msg=\"contains no characters that may be substituted\" variable=value value=\"%v\"\n",value)
+		return value, false, nil
+	}
+
+	dir := path.Dir(pathname)
+	Log.Debug.Printf("op=getCorrectName msg=\"do a listFileNames with specific dir\" variable=dir value=\"%v\"\n",dir)
+	filenames,err := v.listFileNames(dir)
+	if err != nil {
+		return "", false, err
+	}
+	Log.Debug.Printf("op=getCorrectName msg=\"got actual contents of vault secret\" variable=filenames value=\"%v\"\n",filenames)
+
+	possibilities := sfshelpers.SubstitutionPossibilities(value, viper.GetString("subst_char"), "/")
+	Log.Debug.Printf("op=getCorrectName msg=\"got all possible key names\" variable=possibilities value=\"%v\"\n",possibilities)
+	for _,f := range filenames {
+		for _,p := range possibilities {
+			if f == p {
+				Log.Debug.Printf("op=getCorrectName msg=\"found correct substituted name\" variable=filename value=\"%v\"\n",f)
+				if nameonly {
+					return f, true, nil
+				}
+				return dir+"/"+f, true, nil
+			}
+		}
+	}
+	return "", false, errors.New("can't find any substituted possibilties for value "+value)
+}
+
 
 
 
@@ -349,8 +423,10 @@ func init() {
 	}
 	v.client.ClearToken()
 	RegisterStore(&v) //https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
-	Log.Debug.Printf("op=init MTDATA=%s",viper.GetString("MTDATA"))
-	MTDATA = viper.GetString("MTDATA")
-	DTDATA = viper.GetString("DTDATA")
+	if viper.GetString("CURRENT_STORE") == v.String() {
+		Log.Debug.Printf("op=init MTDATA=%s",viper.GetString("MTDATA"))
+		MTDATA = viper.GetString("MTDATA")
+		DTDATA = viper.GetString("DTDATA")
+	}
 }
 
