@@ -34,6 +34,13 @@ VAULT_ADDR: http://127.0.0.1:8200
 # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
 MTDATA: secret/metadata/
 DTDATA: secret/data/
+
+# fuse does not allow the character '/' inside of names of directories or files
+# in vault k=v pairs of one secret will be shown as files, where k is the name
+# of the file and v the value. k may also include names with a '/'.
+# Those slashes will be substituted with the following character
+# may also use some special characters, e.g. '§' or '°'
+subst_char: _
 `)
 
 // https://github.com/spf13/viper#reading-config-files

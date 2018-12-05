@@ -18,6 +18,8 @@ import (
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/spf13/viper"
+
+	"github.com/Muryoutaisuu/secretsfs/pkg/sfshelpers"
 )
 
 // Path internals of vault made configurable with viper
@@ -146,17 +148,25 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (nodefs.F
 	case CFile:
 		return nil, fuse.EISDIR
 	case CValue:
-		k := path.Base(name)
-		Log.Debug.Printf("op=Open s=\"%v\" k=\"%v\"\n",s,k)
+		// get substituted value (if substitution must be done, else keep original)
+		Log.Debug.Printf("op=Open msg=\"before substituting name\" variable=name value=%v\n",name)
+		name, _, err := v.getCorrectName(name, true)
+		if err != nil {
+			Log.Error.Print(err)
+			return nil, fuse.EIO
+		}
+		Log.Debug.Printf("op=Open msg=\"after substituting name\" variable=name value=%v\n",name)
+
+		Log.Debug.Printf("op=Open s=\"%v\" name=\"%v\"\n",s,name)
 		data,ok := s.Data["data"].(map[string]interface{})
 		if ok != true {
 			return nil, fuse.EIO
 		}
-		e,ok := data[k].(string)
+		entry,ok := data[name].(string)
 		if ok != true {
 			return nil, fuse.EIO
 		}
-		return nodefs.NewDataFile([]byte(e)), fuse.OK
+		return nodefs.NewDataFile([]byte(entry)), fuse.OK
 	}
 	return nil, fuse.ENOENT
 }
@@ -272,6 +282,33 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 // returns a Slice containing all valid entries
 // valid means no entries containing a / in their names
 func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
+	data,err := v.listFileNames(name)
+	if err != nil {
+		return nil, err
+	}
+
+	dirs := []fuse.DirEntry{}
+	for k := range data {
+		key := data[k]
+		// special treatment for entries containing the substitution character
+		if strings.Contains(key, "/") { // viper.GetString("subst_char")) { // strings.Contains(k,"/") {
+			key = strings.Replace(key, "/", string(viper.GetString("subst_char")[0]), -1)
+		}
+
+		d := fuse.DirEntry{
+			Name: key,
+			Mode: fuse.S_IFREG,
+		}
+		dirs = append(dirs, d)
+	}
+	Log.Debug.Printf("op=listFile dirs=\"%v\"\n",dirs)
+	return &dirs,nil
+}
+
+// listFileNames is very similar to listFile, but instead of returning fully
+// finished fuse.DirEntry types, it only returns []string containing the keys
+func (v *Vault) listFileNames(name string) ([]string, error) {
+	Log.Debug.Printf("op=listFileNames msg=\"going to read data\" path=\"%s\"\n",DTDATA + name)
 	s,err := v.client.Logical().Read(DTDATA + name)
 	if err != nil || s == nil {
 		if err == nil {
@@ -281,23 +318,17 @@ func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 	}
 	Log.Debug.Printf("op=listFile secret=\"%v\"\n",s)
 	Log.Debug.Printf("op=listFile secret.Data=\"%v\" secret.DataType=\"%T\"\n",s.Data,s.Data)
-	data := s.Data["data"].(map[string]interface{})
-	Log.Debug.Printf("op=listFile data=\"%v\" dataType=\"%T\"\n",data,data)
-	dirs := []fuse.DirEntry{}
-	for k := range data {
-		// skip entries that contain a / in their names
-		if strings.Contains(k,"/") {
-			continue
-		}
-		d := fuse.DirEntry{
-			Name: k,
-			//Name: data[k].(string),
-			Mode: fuse.S_IFREG,
-		}
-		dirs = append(dirs, d)
+	data,ok := s.Data["data"].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("s.Data[\"data\"] resulted in a error")
 	}
-	Log.Debug.Printf("op=listFile dirs=\"%v\"\n",dirs)
-	return &dirs,nil
+	Log.Debug.Printf("op=listFileNames data=\"%v\" dataType=\"%T\"\n",data,data)
+
+  filenames := []string{}
+	for k := range data {
+		filenames = append(filenames, k)
+	}
+	return filenames, nil
 }
 
 // getType returns type of the requested resource
@@ -324,6 +355,56 @@ func (v *Vault) getType(name string) (*api.Secret, Filetype){
 	}
 
 	return nil, CNull
+}
+
+// getCorrectName checks whether a path contains any maybe substituted characters.
+// If yes, it checks in Vault whether there is a substituted key available and
+// returns it incl. whole path.
+// if only the Name itself is wished, set nameonly=true
+// if no value found, then throws an error and returns ""
+//
+// Why is there a nameonly=true ?
+// Problem being the fact, that with the original value in Vault the correct
+// path for getting the Secret from Vault may be quite tricky
+// e.g. the substituted value:  GET secret/my_bad_key
+// would become:                GET secret/my/bad/key
+// where a simple path.Base(path) won't return the secret's name anymore
+func (v *Vault) getCorrectName(pathname string, nameonly bool) (string, bool, error) {
+	value := pathname
+
+	// split if nameonly is true
+	if nameonly {
+		value = path.Base(pathname)
+	}
+
+	// check whether name contains any characters, that may be substituted
+	if !strings.Contains(value, viper.GetString("subst_char")) {
+		Log.Debug.Printf("op=getCorrectName msg=\"contains no characters that may be substituted\" variable=value value=\"%v\"\n",value)
+		return value, false, nil
+	}
+
+	dir := path.Dir(pathname)
+	Log.Debug.Printf("op=getCorrectName msg=\"do a listFileNames with specific dir\" variable=dir value=\"%v\"\n",dir)
+	filenames,err := v.listFileNames(dir)
+	if err != nil {
+		return "", false, err
+	}
+	Log.Debug.Printf("op=getCorrectName msg=\"got actual contents of vault secret\" variable=filenames value=\"%v\"\n",filenames)
+
+	possibilities := sfshelpers.SubstitutionPossibilities(value, viper.GetString("subst_char"), "/")
+	Log.Debug.Printf("op=getCorrectName msg=\"got all possible key names\" variable=possibilities value=\"%v\"\n",possibilities)
+	for _,f := range filenames {
+		for _,p := range possibilities {
+			if f == p {
+				Log.Debug.Printf("op=getCorrectName msg=\"found correct substituted name\" variable=filename value=\"%v\"\n",f)
+				if nameonly {
+					return f, true, nil
+				}
+				return dir+"/"+f, true, nil
+			}
+		}
+	}
+	return "", false, errors.New("can't find any substituted possibilties for value "+value)
 }
 
 
