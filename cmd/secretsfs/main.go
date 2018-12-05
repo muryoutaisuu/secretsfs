@@ -18,12 +18,17 @@ import (
 func main() {
 	flag.Usage = usage
 	var defaults = flag.Bool("print-defaults", false, "prints default configurations")
+	var stores = flag.Bool("print-stores", false, "prints available stores")
 	flag.Parse()
 
 	// print default configs
 	if *defaults {
-		config := config.GetConfigDefaults()
-		fmt.Printf("Default Configs: \n%s",config)
+		fmt.Printf("Default Configs: \n%s",config.GetStringConfigDefaults())
+		os.Exit(0)
+	}
+
+	if *stores {
+		fmt.Printf("Available Stores are: %v\n", store.GetStores())
 		os.Exit(0)
 	}
 

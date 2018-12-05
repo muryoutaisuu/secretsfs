@@ -412,19 +412,19 @@ func (v *Vault) getCorrectName(pathname string, nameonly bool) (string, bool, er
 
 
 func init() {
-	if viper.GetString("CURRENT_STORE") == "Vault" {
-		c,err := api.NewClient(&api.Config{
-			// Address: os.Getenv("VAULT_ADDR"),
-			Address: viper.GetString("VAULT_ADDR"),
-		})
-		if err != nil {
-			Log.Error.Fatal(err)
-		}
-		v := Vault{
-			client: c,
-		}
-		v.client.ClearToken()
-		RegisterStore(&v) //https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
+	c,err := api.NewClient(&api.Config{
+		// Address: os.Getenv("VAULT_ADDR"),
+		Address: viper.GetString("VAULT_ADDR"),
+	})
+	if err != nil {
+		Log.Error.Fatal(err)
+	}
+	v := Vault{
+		client: c,
+	}
+	v.client.ClearToken()
+	RegisterStore(&v) //https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
+	if viper.GetString("CURRENT_STORE") == v.String() {
 		Log.Debug.Printf("op=init MTDATA=%s",viper.GetString("MTDATA"))
 		MTDATA = viper.GetString("MTDATA")
 		DTDATA = viper.GetString("DTDATA")

@@ -86,6 +86,10 @@ func GetConfigDefaults() *[]byte {
 	return &configDefaults
 }
 
+func GetStringConfigDefaults() string {
+	return string(configDefaults)
+}
+
 func init() {
 	InitConfig()
 }
