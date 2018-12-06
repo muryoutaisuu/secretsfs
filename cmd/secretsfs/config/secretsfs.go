@@ -1,6 +1,6 @@
 // config contains the config information about secretsfs.
 // it contains the default configuration, so that it can be accessed and set
-// without any worries
+// without any worries.
 package config
 
 import (
@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-// configDefaults contains the default configurations
+// configDefaults contains the default configurations.
 // Those will be set on startup, if not overwritten via environment variables
-// or a userdefined configurationfile
+// or a userdefined configurationfile.
 var configDefaults = []byte(`
 ---
 ### GENERAL
@@ -48,14 +48,15 @@ DTDATA: secret/data/
 subst_char: _
 `)
 
-// InitConfig reads all configurations and sets them
+// InitConfig reads all configurations and sets them.
 // Order is (first match counts):
-// 1. Environment variables
-// 2. Configurationfile $HOME/.secretsfs/secretsfs.yaml
-// 3. Configurationfile provided by environment variable SFS_CONFIG_FILE
-// 4. Configurationfile /etc/secretsfs/secretsfs.yaml
-// 5. Hardcoded configurations from variable configDefaults
-// This function is executed in init()
+//	1. Environment variables
+//	2. Configurationfile $HOME/.secretsfs/secretsfs.yaml
+//	3. Configurationfile provided by environment variable SFS_CONFIG_FILE
+//	4. Configurationfile /etc/secretsfs/secretsfs.yaml
+//	5. Hardcoded configurations from variable configDefaults
+// This function is executed in init().
+//
 // https://github.com/spf13/viper#reading-config-files
 func InitConfig() {
 	// read defaults first
@@ -95,13 +96,13 @@ func InitConfig() {
 	}
 }
 
-// GetConfigDefaults returns the Contents of configDefaults as *[]byte
-// If you need string, you can also call GetStringConfigDefaults()
+// GetConfigDefaults returns the Contents of configDefaults as *[]byte.
+// If you need string, you can also call GetStringConfigDefaults().
 func GetConfigDefaults() *[]byte {
 	return &configDefaults
 }
 
-// GetStringConfigDefaults returns the Contents of configDefaults converted as string
+// GetStringConfigDefaults returns the Contents of configDefaults converted as string.
 func GetStringConfigDefaults() string {
 	return string(configDefaults)
 }
