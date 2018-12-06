@@ -1,4 +1,4 @@
-// Secretsfs contains main/high-top filesystem for the tool SecretsFS
+// Secretsfs
 //
 // Secretsfs contains the high-top filesystem, that controls top-paths and
 // correctly redirects calls to the correct FUSE Input/Output (FIO) plugin
