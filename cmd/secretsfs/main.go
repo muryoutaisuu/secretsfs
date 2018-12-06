@@ -1,3 +1,5 @@
+// SecretsFS - Access Your Secrets Comfortably and Safely 
+
 package main
 
 import (
