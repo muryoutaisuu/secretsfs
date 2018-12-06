@@ -7,6 +7,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+// FIOSecretsfiles is a Filesystem implementing the FIOPlugin interface that
+// outputs secrets directly when doing a command like:
+//	ls <mountpath>/secretsfiles
 type FIOSecretsfiles struct {}
 
 func (t *FIOSecretsfiles) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
