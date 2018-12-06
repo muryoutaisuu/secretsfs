@@ -7,7 +7,6 @@
 // are always mapped correctly.
 // 
 // Also initializes variable Log for shared (and consistent) Logging.
-
 package fio
 
 import(
