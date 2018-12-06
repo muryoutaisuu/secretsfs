@@ -1,6 +1,24 @@
+// Secretsfs contains main/high-top filesystem for the tool SecretsFS
+//
+// Secretsfs contains the high-top filesystem, that controls top-paths and
+// correctly redirects calls to the correct FUSE Input/Output (FIO) plugin
+//
+// If the tool secretsfs is mounted at /mnt/secretsfs, then for /mnt/secretsfs/x
+// x will be the paths of the registered FIO Plugins.
+// like e.g.:
+//	/mnt/secretsfs/secretsfiles
+//	/mnt/secretsfs/templatefiles
+//
+// FUSE Calls will be redirected 1:1 to those plugins, only changes made are:
+//	1. calls directly on the top layer, like `ls -ld /mnt/secretsfs/secretsfiles`
+//	   that call will be answered by secretsfs itself
+//	2. the called path will be shortened, so it matches more accurately
+//	   that means, when a user calls `ls -la /mnt/secretsfs/secretsfiles/foo/bar`
+//	   instead of passing the values /mnt/secretsfs/secretsfiles/foo/bar or secretsfiles/foo/bar
+//	   the value foo/bar will be returned
+// inspired by this example: https://github.com/hanwen/go-fuse/blob/master/example/hello/main.go
 package secretsfs
 
-// after the example: https://github.com/hanwen/go-fuse/blob/master/example/hello/main.go
 
 import (
 	"errors"
@@ -16,14 +34,22 @@ import (
 	"github.com/Muryoutaisuu/secretsfs/pkg/sfslog"
 )
 
+// Log is used for shared logging properties
 var Log *sfslog.Log = sfslog.Logger()
 
+// SecretsFS is the high-top filesystem.
+// It contains references to FIOMap (mapping mountpath to a plugin) and the
+// currently used store. 
+// 
 type SecretsFS struct {
 	pathfs.FileSystem
 	fms map[string]*fio.FIOMap
 	store store.Store
 }
 
+// NewSecretsFS return a fully configured SecretsFS, that is ready to be mounted.
+// Also does a pre-check whether a store was defined. Returns an error if that
+// is not the case.
 func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap, s store.Store) (*SecretsFS, error) {
 	if s == nil {
 		return nil, errors.New("could not initialize store, store is nil!")
