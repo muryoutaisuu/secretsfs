@@ -14,11 +14,12 @@ type FIOProvider interface {
 	GetAttr(string, *fuse.Context) (*fuse.Attr, fuse.Status)
 	Open(string, uint32, *fuse.Context) (nodefs.File, fuse.Status)
 	OpenDir(string, *fuse.Context) ([]fuse.DirEntry, fuse.Status)
+	FIOPath() string
 }
 
 // FIOMap maps the FIOProvider to a MountPath.
 // Used for registering FIOProviders.
 type FIOMap struct {
-	MountPath string
 	Provider FIOProvider
+	Enabled bool
 }

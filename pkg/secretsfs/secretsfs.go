@@ -68,7 +68,7 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 	if root == "" && subpath == "" {
 		return &fuse.Attr{Mode: fuse.S_IFDIR | 0755,}, fuse.OK
 	}
-	if _,ok := sfs.fms[root]; ok {
+	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
 		return sfs.fms[root].Provider.GetAttr(subpath, context)
 	}
 	return &fuse.Attr{}, fuse.ENOENT
@@ -84,7 +84,7 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 		}
 		return c, fuse.OK
 	}
-	if _,ok := sfs.fms[root]; ok {
+	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
 		return sfs.fms[root].Provider.OpenDir(subpath, context)
 	}
 	return nil, fuse.ENOENT
@@ -96,7 +96,7 @@ func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (fi
 	if name == "" {
 		return nil, fuse.EINVAL
 	}
-	if _,ok := sfs.fms[root]; ok {
+	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
 		return sfs.fms[root].Provider.Open(subpath, flags, context)
 	}
 	return nil, fuse.EPERM

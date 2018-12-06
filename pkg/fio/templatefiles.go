@@ -148,6 +148,10 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 	return nodefs.NewDataFile(buf.Bytes()), fuse.OK
 }
 
+func (t *FIOTemplatefiles) FIOPath() string {
+	return "templatefiles"
+}
+
 func getCorrectPath(name string) string {
 	path := viper.GetString("PATH_TO_TEMPLATES")+name
 	Log.Debug.Printf("op=getCorrectPath variable=path value=\"%s\"\n",path)
@@ -162,21 +166,22 @@ func (s secret) Get(path string) string {
 
 
 
+func init() {
+  secretsfiles := FIOSecretsfiles{}
+  fm := FIOMap{
+    Provider: &secretsfiles,
+  }
+  RegisterProvider(&fm)
+}
+
+
 
 func init() {
-	name := "templatefiles"
-	fios := viper.GetStringSlice("ENABLED_FIOS")
-	for _,f := range fios {
-		if f == name {
-			templatefiles := FIOTemplatefiles{
-				path: viper.GetString("PATH_TO_TEMPLATES"),
-			}
-			fm := FIOMap {
-				MountPath: name,
-				Provider: &templatefiles,
-			}
-
-			RegisterProvider(&fm)
-		}
+	fioprov := FIOTemplatefiles{
+		path: viper.GetString("PATH_TO_TEMPLATES"),
 	}
+	fm := FIOMap{
+		Provider: &fioprov,
+	}
+	RegisterProvider(&fm)
 }
