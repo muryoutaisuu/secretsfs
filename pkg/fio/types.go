@@ -5,7 +5,8 @@ import (
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 )
 
-// FIOProvider interface provides all necessary calls used by FUSE
+// FIOProvider interface provides all necessary calls used by FUSE.
+// FIOProvider implementations will be called by the secretsfs high-top filesytem
 type FIOProvider interface {
 	GetAttr(string, *fuse.Context) (*fuse.Attr, fuse.Status)
 	// uint32 = flags
