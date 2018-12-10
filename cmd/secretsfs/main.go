@@ -48,7 +48,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	log.Printf("flags are: %s\n",flag.Args())
+	log.Printf("Call is: %s\n",os.Args)
 	// print usage if no arguments were provided
 	if len(os.Args) < 1 {
 		usage()
@@ -75,7 +75,7 @@ func main() {
 	// mount it
 	server, err := fuse.NewServer(fsc.RawFS(), mountpoint, &fsopts)
 	if err != nil {
-		log.Fatalf("Mointfail: %v\n", err)
+		log.Fatalf("Mountfail: %v\n", err)
 		os.Exit(1)
 	}
 
