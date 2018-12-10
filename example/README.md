@@ -45,6 +45,8 @@ subst_char: _
 The TemplateFilesFIO works with a default directory, in which templatefiles are located and which is configured in the configuration file.
 Secrets will be loaded from currently activated store and are called inside of the template by following string:
 
+_Note: Also see the file called templatefile.conf_
+
 ```
 {{ .Get "<pathToSecret>" }}
 ```
@@ -75,9 +77,6 @@ Mountoptions may be given like in a normal mount command, e.g.:
 ```
 ./secretsfs <mountpath> -o allow_other
 ```
-
-_Note: Also see the file called templatefile.conf_
-
 
 ### fstab Configuration
 
