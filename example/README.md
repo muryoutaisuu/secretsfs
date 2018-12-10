@@ -45,8 +45,6 @@ subst_char: _
 The TemplateFilesFIO works with a default directory, in which templatefiles are located and which is configured in the configuration file.
 Secrets will be loaded from currently activated store and are called inside of the template by following string:
 
-_Note: Also see the file called templatefile.conf_
-
 ```
 {{ .Get "<pathToSecret>" }}
 ```
@@ -69,6 +67,8 @@ A complete example may look like this:
 [defaults]
 foo = {{ .Get "subdir/bar" }}
 ```
+
+_Note: Also see the file called templatefile.conf_
 
 ### Mounting with Mountoptions
 
