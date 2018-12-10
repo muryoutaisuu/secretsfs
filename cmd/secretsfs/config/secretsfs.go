@@ -1,3 +1,6 @@
+// config contains the config information about secretsfs.
+// it contains the default configuration, so that it can be accessed and set
+// without any worries.
 package config
 
 import (
@@ -8,7 +11,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Default configurations
+// configDefaults contains the default configurations.
+// Those will be set on startup, if not overwritten via environment variables
+// or a userdefined configurationfile.
 var configDefaults = []byte(`
 ---
 ### GENERAL
@@ -43,6 +48,15 @@ DTDATA: secret/data/
 subst_char: _
 `)
 
+// InitConfig reads all configurations and sets them.
+// Order is (first match counts):
+//	1. Environment variables
+//	2. Configurationfile $HOME/.secretsfs/secretsfs.yaml
+//	3. Configurationfile provided by environment variable SFS_CONFIG_FILE
+//	4. Configurationfile /etc/secretsfs/secretsfs.yaml
+//	5. Hardcoded configurations from variable configDefaults
+// This function is executed in init().
+//
 // https://github.com/spf13/viper#reading-config-files
 func InitConfig() {
 	// read defaults first
@@ -60,6 +74,7 @@ func InitConfig() {
 
 	// read config file specific things first and overwrite if necessary
 	viper.SetConfigName("secretsfs")
+	viper.AddConfigPath("$HOME/.secretsfs")  // call multiple times to add many search paths
 	if viper.IsSet("CONFIG_FILE") {
 		viper.SetConfigName(viper.GetString("CONFIG_FILE"))
 	}
@@ -67,7 +82,6 @@ func InitConfig() {
 	//   add config paths of ENV var first so it overwrites any other config?
 	//   TODO: check, whether it really works like this
 	viper.AddConfigPath("/etc/secretsfs/")
-	viper.AddConfigPath("$HOME/.secretsfs")  // call multiple times to add many search paths
 	if viper.IsSet("CONFIG_PATHS") {
 		paths := viper.GetStringSlice("CONFIG_PATHS")
 		for _,p := range paths {
@@ -82,10 +96,13 @@ func InitConfig() {
 	}
 }
 
+// GetConfigDefaults returns the Contents of configDefaults as *[]byte.
+// If you need string, you can also call GetStringConfigDefaults().
 func GetConfigDefaults() *[]byte {
 	return &configDefaults
 }
 
+// GetStringConfigDefaults returns the Contents of configDefaults converted as string.
 func GetStringConfigDefaults() string {
 	return string(configDefaults)
 }

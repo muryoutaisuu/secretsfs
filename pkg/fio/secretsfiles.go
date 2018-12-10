@@ -3,10 +3,11 @@ package fio
 import (
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
-
-	"github.com/spf13/viper"
 )
 
+// FIOSecretsfiles is a Filesystem implementing the FIOPlugin interface that
+// outputs secrets directly when doing a command like:
+//	ls <mountpath>/secretsfiles
 type FIOSecretsfiles struct {}
 
 func (t *FIOSecretsfiles) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
@@ -25,20 +26,16 @@ func (t *FIOSecretsfiles) Open(name string, flags uint32, context *fuse.Context)
 	return nil, status
 }
 
+func (t *FIOSecretsfiles) FIOPath() string {
+	return "secretsfiles"
+}
 
 
 
 func init() {
-	name := "secretsfiles"
-	fios := viper.GetStringSlice("ENABLED_FIOS")
-	for _,f := range fios {
-		if f == name {
-			fm := FIOMap {
-				MountPath: name,
-				Provider: &FIOSecretsfiles{},
-			}
-
-			RegisterProvider(&fm)
-		}
+	fioprov := FIOSecretsfiles{}
+	fm := FIOMap{
+		Provider: &fioprov,
 	}
+	RegisterProvider(&fm)
 }
