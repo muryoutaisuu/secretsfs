@@ -10,7 +10,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/Muryoutaisuu/secretsfs/pkg/store"
+	"github.com/muryoutaisuu/secretsfs/pkg/store"
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/spf13/viper"

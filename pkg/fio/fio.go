@@ -10,8 +10,8 @@
 package fio
 
 import(
-	"github.com/Muryoutaisuu/secretsfs/pkg/sfslog"
-	"github.com/Muryoutaisuu/secretsfs/pkg/store"
+	"github.com/muryoutaisuu/secretsfs/pkg/sfslog"
+	"github.com/muryoutaisuu/secretsfs/pkg/store"
 
 	"github.com/spf13/viper"
 )
