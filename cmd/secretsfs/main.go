@@ -22,7 +22,7 @@ import (
 func main() {
 	// parse arguments & flags
 	flag.Usage = usage
-	var opts = flag.String("o","noopts","Options passed through to fuse")
+	var opts = flag.String("o","","Options passed through to fuse")
 	var currentstore = flag.Bool("print-store", false, "prints currently set store")
 	var defaults = flag.Bool("print-defaults", false, "prints default configurations")
 	var stores = flag.Bool("print-stores", false, "prints available stores")
