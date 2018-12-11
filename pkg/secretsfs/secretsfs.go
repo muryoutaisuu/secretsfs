@@ -29,9 +29,9 @@ import (
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
 
-	"github.com/Muryoutaisuu/secretsfs/pkg/fio"
-	"github.com/Muryoutaisuu/secretsfs/pkg/store"
-	"github.com/Muryoutaisuu/secretsfs/pkg/sfslog"
+	"github.com/muryoutaisuu/secretsfs/pkg/fio"
+	"github.com/muryoutaisuu/secretsfs/pkg/store"
+	"github.com/muryoutaisuu/secretsfs/pkg/sfslog"
 )
 
 // Log is used for shared logging properties

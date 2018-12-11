@@ -18,7 +18,7 @@ import (
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/spf13/viper"
 
-	"github.com/Muryoutaisuu/secretsfs/pkg/sfshelpers"
+	"github.com/muryoutaisuu/secretsfs/pkg/sfshelpers"
 )
 
 // Path internals of vault made configurable with viper

@@ -11,10 +11,10 @@ import (
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
 
-	"github.com/Muryoutaisuu/secretsfs/cmd/secretsfs/config"
-	"github.com/Muryoutaisuu/secretsfs/pkg/fio"
-	"github.com/Muryoutaisuu/secretsfs/pkg/store"
-	"github.com/Muryoutaisuu/secretsfs/pkg/secretsfs"
+	"github.com/muryoutaisuu/secretsfs/cmd/secretsfs/config"
+	"github.com/muryoutaisuu/secretsfs/pkg/fio"
+	"github.com/muryoutaisuu/secretsfs/pkg/store"
+	"github.com/muryoutaisuu/secretsfs/pkg/secretsfs"
 )
 
 func main() {

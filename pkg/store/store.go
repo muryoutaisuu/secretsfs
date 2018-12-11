@@ -1,9 +1,9 @@
 package store
 
 import (
-	"github.com/Muryoutaisuu/secretsfs/pkg/sfslog"
+	"github.com/muryoutaisuu/secretsfs/pkg/sfslog"
 	"github.com/spf13/viper"
-	//"github.com/Muryoutaisuu/secretsfs/cmd/secretsfs/config"
+	//"github.com/muryoutaisuu/secretsfs/cmd/secretsfs/config"
 )
 
 // store contains the registered Store
