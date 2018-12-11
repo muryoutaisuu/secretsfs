@@ -50,7 +50,7 @@ func main() {
 
 	log.Printf("Call is: %s\n",os.Args)
 	// print usage if no arguments were provided
-	if len(os.Args) < 1 {
+	if len(os.Args) < 2 {
 		usage()
 		os.Exit(2)
 	}
