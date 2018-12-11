@@ -22,10 +22,11 @@ import (
 func main() {
 	// parse arguments & flags
 	flag.Usage = usage
-	var opts = flag.String("o","noopts","Options passed through to fuse")
+	var opts = flag.String("o","","Options passed through to fuse")
 	var currentstore = flag.Bool("print-store", false, "prints currently set store")
 	var defaults = flag.Bool("print-defaults", false, "prints default configurations")
 	var stores = flag.Bool("print-stores", false, "prints available stores")
+	var foreground = flag.Bool("foreground", false, "run in foreground")
 
 	firstdashed := firstDashedArg(os.Args)
 	flag.CommandLine.Parse(os.Args[firstdashed:])
@@ -50,7 +51,7 @@ func main() {
 
 	log.Printf("Call is: %s\n",os.Args)
 	// print usage if no arguments were provided
-	if len(os.Args) < 1 {
+	if len(os.Args) < 2 {
 		usage()
 		os.Exit(2)
 	}
@@ -65,37 +66,32 @@ func main() {
 	pathnfs := pathfs.NewPathNodeFs(sfs, nil)
 
 	fsc := nodefs.NewFileSystemConnector(pathnfs.Root(), nodefs.NewOptions())  // FileSystemConnector
-	//rfs := fsc.RawFS()  // Raw FileSystem
 
 	// set options
 	fsopts := fuse.MountOptions{}
 	log.Println(*opts)
 	fsopts.Options = strings.Split(*opts, ",")
 
-	// mount it
+	// create server
 	server, err := fuse.NewServer(fsc.RawFS(), mountpoint, &fsopts)
 	if err != nil {
 		log.Fatalf("Mountfail: %v\n", err)
 		os.Exit(1)
 	}
 
-	// mounted, now serve!
-	log.Printf("server: %s\n",server)
-	server.Serve()
-
-
-	/*
-	// create the server for the filesytem, that will mount it
-	server, _, err := nodefs.MountRoot(mountpoint, pathnfs.Root(), nodefs.NewOptions())
-	if err != nil {
-		log.Fatalf("Mount fail: %v\n", err)
+	// mount and now serve me till the end!!! (in background of course)
+	// https://github.com/hanwen/go-fuse/pull/241#discussion_r224999957
+	if *foreground {
+		server.Serve()
+	} else {
+		log.Printf("server: %s\n",server)
+		go server.Serve()
+		err = server.WaitMount()
+		if err != nil {
+			log.Fatalf("Mountfail: %v\n",err)
+			os.Exit(1)
+		}
 	}
-	log.Printf("server: %s\n",server)
-
-	// mount the filesystem object
-	//server.opts.AllowOther = true
-	server.Serve()
-	*/
 }
 
 // print usage of this tool
@@ -103,18 +99,6 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "  %s MOUNTPOINT\n", os.Args[0])
 	flag.PrintDefaults()
-}
-
-// handle mount options
-func setMountOptions(s string, fsopts *fuse.MountOptions) error {
-	opts := strings.Split(s, ",")
-	for _,o := range opts {
-		switch o {
-		case "allow_other":
-			fsopts.AllowOther = true
-		}
-	}
-	return nil
 }
 
 // firstDashedArg returns the index of the first dashed argument, e.g. -ex
