@@ -1,7 +1,7 @@
 [![GoDoc](https://godoc.org/github.com/muryoutaisuu/secretsfs?status.svg)](https://godoc.org/github.com/muryoutaisuu/secretsfs/pkg)
 
-* GoDoc: https://godoc.org/github.com/muryoutaisuu/secretsfs/pkg
-* GoWalker: https://gowalker.org/github.com/muryoutaisuu/secretsfs/pkg
+* [GoDoc](https://godoc.org/github.com/muryoutaisuu/secretsfs/pkg)
+* [GoWalker](https://gowalker.org/github.com/muryoutaisuu/secretsfs/pkg)
 
 # Work in Progress...
 
