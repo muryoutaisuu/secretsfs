@@ -5,7 +5,12 @@ import (
 	//"github.com/hanwen/go-fuse/fuse/nodefs"
 )
 
-// Store interface provides all necessary calls to backend store
+// Store interface provides all necessary calls to backend store. Store will be
+// called by the FIOProviders.
+//
+// If you want to program your own Store plugin, please implement this interface
+// and register your store with the RegisterStore(Store) function. The FUSE-calls
+// are adopted from https://godoc.org/github.com/hanwen/go-fuse/fuse/pathfs#FileSystem
 type Store interface {
 	GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status)
 	Open(name string, flags uint32, context *fuse.Context) (string, fuse.Status)
