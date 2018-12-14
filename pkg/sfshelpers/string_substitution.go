@@ -1,15 +1,19 @@
 package sfshelpers
 
+// SubstitutionPossibilities calculates all different possibilities that can be
+// be achieved by substituting a string one way or another.
+// Takes string as arg s, then a bad string as b, and a new string as n.
+// Also look at this example:
+//
 //	func main() {
 //		orig := "a_b_c_d"
-//		mytest := substitutionPossibilities(orig, "_", "/")
+//		mytest := SubstitutionPossibilities(orig, "_", "/")
 //		fmt.Printf("orig: %s\nvariants: %s", orig, mytest)
 //	}
 //	
-//	output will be:
+// output will be:
 //	orig: a_b_c_d
 //	variants: [a_b_c_d a_b_c/d a_b/c_d a_b/c/d a/b_c_d a/b_c/d a/b/c_d a/b/c/d]
-
 func SubstitutionPossibilities(s, b, n string) []string {
 	l := len(s)
 	var mys []string

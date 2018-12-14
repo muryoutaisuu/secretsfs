@@ -31,7 +31,7 @@ func RegisterStore(s Store) {
 
 // GetStores returns all registered stores.
 // Registered stores are all available stores that a user may configure as a
-// store of secretsfs
+// store of secretsfs.
 func GetStores() []string {
 	return stores
 }

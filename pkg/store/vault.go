@@ -6,13 +6,9 @@ import (
 	"strconv"
 	"io/ioutil"
 	"path/filepath"
-	//"os"
 	"os/user"
 	"strings"
 	"path"
-	//"encoding/json"
-
-	//"gopkg.in/yaml.v2"
 
 	"github.com/hashicorp/vault/api"
 	"github.com/hanwen/go-fuse/fuse"
@@ -23,8 +19,10 @@ import (
 
 // Path internals of vault made configurable with viper
 // taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
-var MTDATA string
-var DTDATA string
+var (
+	MTDATA string
+	DTDATA string
+)
 
 // Filetype define the type of the returned value element of vault
 type Filetype byte
@@ -38,17 +36,15 @@ const (
 
 // Vault struct implements the calls called by fuse and returns accordingly
 // requested resources.
-// it's a store and may be coupled with multiple fio structs
+// It's a store and may be coupled with multiple fio structs
 type Vault struct {
 	client *api.Client
-	//TokenAuth *api.Client.Auth().Token()
 }
 
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	Log.Debug.Printf("ops=GetAttr name=\"%v\"\n",name)
 	Log.Debug.Printf("ops=GetAttr MTDATA=%s",viper.GetString("MTDATA"))
 	Log.Debug.Printf("ops=GetAttr Token=%s",v.client.Token())
-	//name = MTDATA + name
 
 	// opening directory (aka secretsfiles/)
 	if name == "" {
@@ -230,7 +226,7 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 	return resp,err
 }
 
-// readAuthToken opens the file containing the authenticationtoken and trimps it
+// readAuthToken opens the file containing the authenticationtoken and trims it
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	// path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
 	path := filepath.Join(u.HomeDir, viper.GetString("FILE_ROLEID"))

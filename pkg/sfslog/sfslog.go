@@ -1,3 +1,6 @@
+// sfslog package provides all needed logging features for a consistent logging
+// format through all provided plugins.
+// Code taken from example:
 // https://www.ardanlabs.com/blog/2013/11/using-log-package-in-go.html
 package sfslog
 
@@ -9,6 +12,9 @@ import (
 	// TODO: make debug configurable
 )
 
+// Log will contain four different logging levels, which themselves can be
+// called like any other default go logger (because they are default go logger
+// in reality).
 type Log struct {
 	Debug   *log.Logger
 	Info    *log.Logger
@@ -16,6 +22,8 @@ type Log struct {
 	Error   *log.Logger
 }
 
+// Logger return a struct of type Log, which contains for different logging level
+// default go loggers.
 func Logger() *Log {
 	var l Log
 	// log setup

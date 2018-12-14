@@ -103,7 +103,8 @@ func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (fi
 }
 
 
-
+// rootName calculates, which FIO the call came from and what the subpath for
+// the FIO is
 func rootName(path string) (root, subpath string) {
   list := strings.Split(path, string(filepath.Separator))
   root = list[0]

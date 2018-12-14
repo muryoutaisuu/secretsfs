@@ -26,7 +26,9 @@ var Log *sfslog.Log = sfslog.Logger()
 var sto store.Store
 
 // RegisterProvider registers FIOMaps.
-// To be used inside of init() Function of Plugins
+// To be used inside of init() Function of Plugins.
+// If FIO is enabled due to configuration, also enable it.
+// If not, only register it in Disabled state
 func RegisterProvider(fm *FIOMap) {
 	fios := viper.GetStringSlice("ENABLED_FIOS")
 	for _,f := range fios {
@@ -35,7 +37,6 @@ func RegisterProvider(fm *FIOMap) {
 		}
 	}
 	fiomaps[fm.Provider.FIOPath()] = fm
-	//fiomaps = append(fiomaps, fm)
 }
 
 // FIOMaps returns all registered FIO Plugins mapped with their mountpaths.

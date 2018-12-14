@@ -6,20 +6,26 @@ import (
 	"io/ioutil"
 	"text/template"
 	"bytes"
-	"errors"
 	"path"
 	"strings"
 
-	"github.com/muryoutaisuu/secretsfs/pkg/store"
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/spf13/viper"
 )
 
+// FIOTemplatefiles is a Filesystem implementing the FIOPlugin interface that
+// first reads in a certain templatefile and then parses through all variables
+// trying to call the store with the requesting users UID. If the requesting user
+// does have permission for each secret, the template will be rendered with those
+// secret values and returned upon an easy read syscall:
+//  cat <mountpoint>/templatefiles/templated.conf
 type FIOTemplatefiles struct {
 	templpath string
 }
 
+// secret will be used to call the stores implementation of all the needed FUSE-
+// operations together with the provided flags and fuse.Context. 
 type secret struct {
 	flags uint32
 	context *fuse.Context
@@ -156,21 +162,12 @@ func (t *FIOTemplatefiles) FIOPath() string {
 	return "templatefiles"
 }
 
+// getCorrectPath returns the corrected Path for reading the file from local
+// filesytem
 func getCorrectPath(name string) string {
 	filepath := viper.GetString("PATH_TO_TEMPLATES")+name
 	Log.Debug.Printf("op=getCorrectPath variable=filepath value=\"%s\"\n",filepath)
 	return filepath
-}
-
-func (s secret) Get(filepath string) (string, error) {
-	sto := store.GetStore()
-  content, status := sto.Open(filepath, s.flags, s.context)
-	if status != fuse.OK {
-		Log.Error.Printf("op=Get msg=\"There was an error while loading secret from store\" fuse.Status=\"%s\"\n",status)
-		//return "", errors.New("There was an error while loading Secret from store, fuse.Status="+fmt.Sprint(status))
-		return "", errors.New(fmt.Sprint(status))
-	}
-	return content, nil
 }
 
 
@@ -181,16 +178,4 @@ func init() {
     Provider: &secretsfiles,
   }
   RegisterProvider(&fm)
-}
-
-
-
-func init() {
-	fioprov := FIOTemplatefiles{
-		templpath: viper.GetString("PATH_TO_TEMPLATES"),
-	}
-	fm := FIOMap{
-		Provider: &fioprov,
-	}
-	RegisterProvider(&fm)
 }
