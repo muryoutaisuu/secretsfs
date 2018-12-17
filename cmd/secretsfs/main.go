@@ -26,6 +26,7 @@ func main() {
 	var currentstore = flag.Bool("print-store", false, "prints currently set store")
 	var defaults = flag.Bool("print-defaults", false, "prints default configurations")
 	var stores = flag.Bool("print-stores", false, "prints available stores")
+	var fios = flag.Bool("print-fios", false, "prints available FIOs")
 	var foreground = flag.Bool("foreground", false, "run in foreground")
 
 	firstdashed := firstDashedArg(os.Args)
@@ -40,6 +41,17 @@ func main() {
 	// print available stores, -print-stores
 	if *stores {
 		fmt.Printf("Available Stores are: %v\n", store.GetStores())
+		os.Exit(0)
+	}
+
+	// prints available fios, -print-fios
+	if *fios {
+		maps := fio.FIOMaps()
+		list := make([]string, 0)
+		for k := range maps {
+			list = append(list, k)
+		}
+		fmt.Printf("Available FIOs are: %v\n", list)
 		os.Exit(0)
 	}
 
@@ -75,7 +87,7 @@ func main() {
 	// create server
 	server, err := fuse.NewServer(fsc.RawFS(), mountpoint, &fsopts)
 	if err != nil {
-		log.Fatalf("Mountfail: %v\n", err)
+		log.Printf("Mountfail: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -85,13 +97,17 @@ func main() {
 		server.Serve()
 	} else {
 		log.Printf("server: %s\n",server)
+		log.Printf("server: %s\n",server.DebugData())
 		go server.Serve()
 		err = server.WaitMount()
 		if err != nil {
-			log.Fatalf("Mountfail: %v\n",err)
+			log.Printf("Mountfail: %v\n",err)
 			os.Exit(1)
 		}
+	defer server.Unmount()
+
 	}
+	return
 }
 
 // print usage of this tool

@@ -8,6 +8,9 @@ import (
 	"bytes"
 	"path"
 	"strings"
+	"errors"
+
+	"github.com/muryoutaisuu/secretsfs/pkg/store"
 
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
@@ -168,6 +171,21 @@ func getCorrectPath(name string) string {
 	filepath := viper.GetString("PATH_TO_TEMPLATES")+name
 	Log.Debug.Printf("op=getCorrectPath variable=filepath value=\"%s\"\n",filepath)
 	return filepath
+}
+
+
+// Get is the function that will be called from inside of the templatefile.
+// You need to use following scheme to get secrets substituted:
+//  {{ .Get "path/to/secret" }}
+func (s secret) Get(filepath string) (string, error) {
+	sto := store.GetStore()
+  content, status := sto.Open(filepath, s.flags, s.context)
+	if status != fuse.OK {
+		Log.Error.Printf("op=Get msg=\"There was an error while loading secret from store\" fuse.Status=\"%s\"\n",status)
+		//return "", errors.New("There was an error while loading Secret from store, fuse.Status="+fmt.Sprint(status))
+		return "", errors.New(fmt.Sprint(status))
+	}
+	return content, nil
 }
 
 

@@ -1,1 +1,1 @@
-secretsfs    /mnt/secretsfs         fuse          allow_other    0 0
+secretsfs    /mnt/fstabsecretsfs         fuse          allow_other    0 0
