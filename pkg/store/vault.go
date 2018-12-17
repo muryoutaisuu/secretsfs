@@ -19,10 +19,12 @@ import (
 
 // Path internals of vault made configurable with viper
 // taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
-var (
-	MTDATA string
-	DTDATA string
-)
+//var (
+//	MTDATA string
+//	DTDATA string
+//)
+var MTDATA string
+var DTDATA string
 
 // Filetype define the type of the returned value element of vault
 type Filetype byte

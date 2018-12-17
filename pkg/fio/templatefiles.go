@@ -173,9 +173,11 @@ func getCorrectPath(name string) string {
 
 
 func init() {
-  secretsfiles := FIOSecretsfiles{}
-  fm := FIOMap{
-    Provider: &secretsfiles,
-  }
-  RegisterProvider(&fm)
+	fioprov := FIOTemplatefiles{
+		templpath: viper.GetString("PATH_TO_TEMPLATES"),
+	}
+	fm := FIOMap{
+		Provider: &fioprov,
+	}
+	RegisterProvider(&fm)
 }
