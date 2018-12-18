@@ -13,6 +13,7 @@ import (
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
 	"github.com/sevlyar/go-daemon"
+	"github.com/spf13/viper"
 
 	"github.com/muryoutaisuu/secretsfs/cmd/secretsfs/config"
 	"github.com/muryoutaisuu/secretsfs/pkg/fio"
@@ -101,13 +102,14 @@ func main() {
 		defer server.Unmount()
 	} else {
 		//newargs := append(os.Args, "-foreground")
+		log.Println("logFileName is: ", viper.GetString("logFileName"))
 		cntxt := &daemon.Context{
-			PidFileName: "pid",
-			PidFilePerm: 0644,
-			LogFileName: "log",
-			LogFilePerm: 0640,
-			WorkDir:     "./",
-			Umask:       027,
+			PidFileName: viper.GetString("PIDFILENAME"),
+			PidFilePerm: os.FileMode(viper.GetInt("PIDFILEPERM")),
+			LogFileName: viper.GetString("LOGFILENAME"),
+			LogFilePerm: os.FileMode(viper.GetInt("LOGFILEPERM")),
+			WorkDir:     viper.GetString("WORKDIR"),
+			Umask:       viper.GetInt("UMASK"),
 			Args:        append(os.Args, "-foreground"),
 		}
 

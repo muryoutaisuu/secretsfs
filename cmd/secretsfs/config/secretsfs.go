@@ -22,6 +22,15 @@ var configDefaults = []byte(`
 # - $HOME/.secretsfs
 # CONFIG_FILE: secretsfs  # without file type
 
+# BACKGROUND MODE
+PIDFILENAME: /var/run/secretsfs.pid
+PIDFILEPERM: 0640
+LOGFILENAME: /var/log/secretsfs.log
+LOGFILEPERM: 0640
+WORKDIR: "./"
+UMASK: 027
+
+
 ### FIO
 ENABLED_FIOS:
 - secretsfiles
@@ -29,6 +38,7 @@ ENABLED_FIOS:
 
 # templatefiles
 PATH_TO_TEMPLATES: /etc/secretsfs/templates/
+
 
 ### STORE
 CURRENT_STORE: Vault
