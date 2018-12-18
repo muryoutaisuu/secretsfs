@@ -1,0 +1,11 @@
+# If you modify this, please also make sure to edit init.sh
+
+[Unit]
+Description=Secretsfs mounts a simple access secret store
+Documentation=https://github.com/muryoutaisuu/secretsfs
+After=network-online.target
+
+[Service]
+User=root
+Group=root
+ExecStart=/usr/sbin/mount.secretsfs /mnt/secretsfs -o allow_other -foreground
