@@ -100,7 +100,7 @@ func main() {
 		server.Serve()
 		defer server.Unmount()
 	} else {
-		newargs := append(os.Args, "-foreground")
+		//newargs := append(os.Args, "-foreground")
 		cntxt := &daemon.Context{
 			PidFileName: "pid",
 			PidFilePerm: 0644,
@@ -108,7 +108,7 @@ func main() {
 			LogFilePerm: 0640,
 			WorkDir:     "./",
 			Umask:       027,
-			Args:        newargs,
+			Args:        append(os.Args, "-foreground"),
 		}
 
 		d, err := cntxt.Reborn()
