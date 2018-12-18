@@ -12,6 +12,7 @@ import (
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
+	"github.com/sevlyar/go-daemon"
 
 	"github.com/muryoutaisuu/secretsfs/cmd/secretsfs/config"
 	"github.com/muryoutaisuu/secretsfs/pkg/fio"
@@ -82,31 +83,52 @@ func main() {
 	// set options
 	fsopts := fuse.MountOptions{}
 	log.Println(*opts)
-	fsopts.Options = strings.Split(*opts, ",")
 
-	// create server
-	server, err := fuse.NewServer(fsc.RawFS(), mountpoint, &fsopts)
-	if err != nil {
-		log.Printf("Mountfail: %v\n", err)
-		os.Exit(1)
-	}
 
-	// mount and now serve me till the end!!! (in background of course)
-	// https://github.com/hanwen/go-fuse/pull/241#discussion_r224999957
+	// https://github.com/sevlyar/go-daemon/blob/master/examples/cmd/gd-simple/simple.go
+
 	if *foreground {
-		server.Serve()
-	} else {
-		log.Printf("server: %s\n",server)
-		log.Printf("server: %s\n",server.DebugData())
-		go server.Serve()
-		err = server.WaitMount()
+		fsopts.Options = strings.Split(*opts, ",")
+
+		// create server
+		server, err := fuse.NewServer(fsc.RawFS(), mountpoint, &fsopts)
 		if err != nil {
-			log.Printf("Mountfail: %v\n",err)
+			log.Printf("Mountfail: %v\n", err)
 			os.Exit(1)
 		}
-	defer server.Unmount()
+		// mount and now serve me till the end!!!
+		server.Serve()
+		defer server.Unmount()
+	} else {
+		//newargs := append(os.Args, "-foreground")
+		cntxt := &daemon.Context{
+			PidFileName: "pid",
+			PidFilePerm: 0644,
+			LogFileName: "log",
+			LogFilePerm: 0640,
+			WorkDir:     "./",
+			Umask:       027,
+			Args:        append(os.Args, "-foreground"),
+		}
 
+		d, err := cntxt.Reborn()
+		if err != nil {
+			log.Fatal("Unable to run: ", err)
+		}
+		if d != nil {
+			return
+		}
+		defer cntxt.Release()
+
+		//log.Printf("server: %s\n",server)
+		//log.Printf("server: %s\n",server.DebugData())
+		//go server.Serve()
+		//err = server.WaitMount()
+		//if err != nil {
+		//	log.Printf("Mountfail: %v\n",err)
+		//	os.Exit(1)
 	}
+
 	return
 }
 
