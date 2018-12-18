@@ -119,14 +119,6 @@ func main() {
 			return
 		}
 		defer cntxt.Release()
-
-		//log.Printf("server: %s\n",server)
-		//log.Printf("server: %s\n",server.DebugData())
-		//go server.Serve()
-		//err = server.WaitMount()
-		//if err != nil {
-		//	log.Printf("Mountfail: %v\n",err)
-		//	os.Exit(1)
 	}
 
 	return
