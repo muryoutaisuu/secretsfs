@@ -17,7 +17,7 @@ export VAULT_TOKEN="$ROOT"
 # put some secrets into vault
 vault kv put secret/hello foo=world
 vault kv put secret/subdir/mury foo2=world2 bar2=natii
-vault kv put secret/hello2 my/bad/key=my/bad/value mynormalkey=mynormalvalue "my key"="my value" "my second key"="my second value"
+vault kv put secret/hello2 my/bad/key=my/bad/value my_bad_key=my_bad_value mynormalkey=mynormalvalue "my key"="my value" "my second key"="my second value"
 
 # create a new approle called mury and allow it nearly everything
 vault auth enable approle
