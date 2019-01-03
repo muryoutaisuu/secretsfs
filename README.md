@@ -60,7 +60,7 @@ go install ./cmd/secretsfs                          # install secretsfs
 
 ## How to start *secretsfs*
 
-* Start it manually with `secretsfs <mountpath> [-o <mountoptions>] [-foreground [&]]
+* Start it manually with `secretsfs <mountpath> [-o <mountoptions>] [-foreground [&]]`
 * Start it with Systemd, use the predefined service in the examples folder
 * Start it with fstab, use the predefined line in the examples folder
 
