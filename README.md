@@ -60,7 +60,7 @@ go install ./cmd/secretsfs                          # install secretsfs
 
 # Known Issues
 
-* **Substitution:** `a/b` may be substituted to `a_b`, which may also already be in the backend (e.g. Vault). This will likely cause a clash. As a workaround either configure `subst_char` in the configuration file to a different value, or do not use `/` in Vault key names at all. If clashing, the alphabetically first key name will have precedence (in this case it would be `a/b`.
+* **Substitution:** `a/b` may be substituted to `a_b`, which may also already be in the backend (e.g. Vault). This will likely cause a clash. As a workaround either configure `subst_char` in the configuration file to a different value, or do not use `/` in Vault key names at all. If clashing, the alphabetically first key name will have precedence (in this case it would be `a/b`).
 * **Background use:** if *secretsfs* is used in background, it will start itself with the `-foreground` parameter. This causes the process in `ps -ef` to be shown with the `-foreground` flag although the user started it without the -foreground flag. It's a rather aestethic issue.
 
 # Varia
