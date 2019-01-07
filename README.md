@@ -9,9 +9,9 @@ Subject to changes of license, ownership, api and code structure amongst other t
 
 **Do not use yet!!!**
 
-# Purpose of secretsfs
+# Purpose of *secretsfs*
 
-_secretsfs_ implements a fuse-filesytem, that allows to interact with secrets stored in a backend (called store) via simple filesysten-interacting commands.
+_secretsfs_ implements a FUSE-filesytem, that allows to interact with secrets stored in a backend (called store) via simple filesysten-interacting commands.
 One such store may be [Vault](https://github.com/hashicorp/vault).
 
 Output formats (called FIO, stands for File Input/Output) are treated like plugins and can be (de-)activated in a configuration file. Out of the box implemented FIOs are:
@@ -21,7 +21,7 @@ Output formats (called FIO, stands for File Input/Output) are treated like plugi
 
 # Getting started
 
-## Just test _secretsfs_ with a dev Vault instance
+## Just test _secretsfs_ with a development Vault instance
 
 If you simply want to test how to interact with _secretsfs_, you may execute the shell script `vault-startup.sh`.
 This just starts a development vault instance on your host listening on port 8200 and populates some initial values.
@@ -58,11 +58,18 @@ go get ./...                                        # get dependencies
 go install ./cmd/secretsfs                          # install secretsfs
 ```
 
-## How to start *secretsfs*
+## Start *secretsfs*
+
+There are three possible ways to start *secretsfs*:
 
 * Start it manually with `secretsfs <mountpath> [-o <mountoptions>] [-foreground [&]]`
 * Start it with Systemd, use the predefined service in the examples folder
+** `cp example/secretsfs.service /usr/lib/systemd/system/secretsfs.service`
+** `systemctl enable secretsfs`
+** `systemctl start secretsfs`
 * Start it with fstab, use the predefined line in the examples folder
+** `cat example/secretsfs.fstab >> /etc/fstab`
+** `mount -a`
 
 # Known Issues
 
