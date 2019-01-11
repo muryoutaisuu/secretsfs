@@ -12,7 +12,7 @@ echo -n "type in root token: "
 read ROOT
 export VAULT_TOKEN="$ROOT"
 #echo export VAULT_TOKEN="$ROOT" >> sourceit
-#echo "export ROOTTOKEN=$VAULT_TOKEN" >> sourceit
+echo "export ROOTTOKEN=$VAULT_TOKEN" >> sourceit
 
 # put some secrets into vault
 vault kv put secret/hello foo=world
