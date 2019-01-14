@@ -24,6 +24,8 @@ import (
 	"errors"
 	"strings"
 	"path/filepath"
+	"os/user"
+	"strconv"
 
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
@@ -65,6 +67,12 @@ func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap, s store.Stor
 func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	root, subpath := rootName(name)
 	Log.Debug.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n",name,root,subpath)
+	u,e := getUser(context)
+	if e != nil {
+		return nil, fuse.EPERM
+	}
+	Log.Info.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n userid=\"%v\" username=\"%v\"",name,root,subpath,u.Uid,u.Username)
+
 	if root == "" && subpath == "" {
 		return &fuse.Attr{Mode: fuse.S_IFDIR | 0755,}, fuse.OK
 	}
@@ -77,6 +85,12 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
 	root, subpath := rootName(name)
 	Log.Debug.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n",name,root,subpath)
+	u,e := getUser(context)
+	if e != nil {
+		return nil, fuse.EPERM
+	}
+	Log.Info.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n userid=\"%v\" username=\"%v\"",name,root,subpath,u.Uid,u.Username)
+
 	if name == "" {
 		c = []fuse.DirEntry{}
 		for k := range sfs.fms {
@@ -93,6 +107,12 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	root, subpath := rootName(name)
 	Log.Debug.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n",name,root,subpath)
+	u,e := getUser(context)
+	if e != nil {
+		return nil, fuse.EPERM
+	}
+	Log.Info.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n userid=\"%v\" username=\"%v\"",name,root,subpath,u.Uid,u.Username)
+
 	if name == "" {
 		return nil, fuse.EINVAL
 	}
@@ -112,3 +132,9 @@ func rootName(path string) (root, subpath string) {
   return
 }
 
+
+// getUser returns user element
+// used for getting userinfo for logging
+func getUser(context *fuse.Context) (*user.User, error) {
+	return user.LookupId(strconv.Itoa(int(context.Owner.Uid)))
+}
