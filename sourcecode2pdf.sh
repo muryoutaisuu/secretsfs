@@ -7,7 +7,7 @@ STRING="for i in {1..${C}}.ps; do ps2pdf \$i; done"
 eval $STRING
 #for i in {0..$(ls -l *.pdf | wc -l)}.pdf; do ps2pdf $i; done
 cd ..
-STRING="gs -q -sPAPERSIZE=a4 -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=sourcecode.pdf sourcecode_deckblatt.pdf $(echo pdf/{1..13}.pdf)"
+STRING="gs -q -sPAPERSIZE=a4 -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=sourcecode.pdf $(echo pdf/{1..13}.pdf)"
 eval $STRING
 rm pdf/*
 mv sourcecode.pdf pdf
