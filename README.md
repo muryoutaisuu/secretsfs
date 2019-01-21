@@ -3,6 +3,20 @@
 * [GoDoc](https://godoc.org/github.com/muryoutaisuu/secretsfs/pkg)
 * [GoWalker](https://gowalker.org/github.com/muryoutaisuu/secretsfs/pkg)
 
+
+Table of Contents
+=================
+
+   * [Work in Progress...](#work-in-progress)
+   * [Purpose of <em>secretsfs</em>](#purpose-of-secretsfs)
+   * [Getting started](#getting-started)
+      * [Just test <em>secretsfs</em> with a development Vault instance](#just-test-secretsfs-with-a-development-vault-instance)
+      * [Install <em>secretsfs</em>](#install-secretsfs)
+      * [Start <em>secretsfs</em>](#start-secretsfs)
+   * [Known Issues](#known-issues)
+   * [Varia](#varia)
+      * [Local GoDoc](#local-godoc)
+
 # Work in Progress...
 
 Subject to changes of license, ownership, api and code structure amongst other things...
