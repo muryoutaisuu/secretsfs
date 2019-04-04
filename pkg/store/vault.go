@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"io/ioutil"
-	"path/filepath"
 	"os/user"
 	"strings"
 	"path"
@@ -407,18 +406,15 @@ func (v *Vault) getCorrectName(pathname string, nameonly bool) (string, bool, er
 // This means that $HOME will be resolved to the users homedirectory, and that
 // the users alias is applied
 func finIdPath(u *user.User) (string) {
-	path := filepath.Join(u.HomeDir, viper.GetString("FILE_ROLEID"))
-	path = strings.Replace(path, "$HOME", u.HomeDir, 1)
+	path := strings.Replace(viper.GetString("FILE_ROLEID"), "$HOME", u.HomeDir, 1)
 
-	aus := viper.GetStringMapString("ALIAS_USER")
-	if val, ok := aus[u.Name]; ok {
-		newu, _ :=  user.Lookup(val)
-		path = finIdPath(newu)
+	specialusers := viper.GetStringMapString("FILE_ROLEID_USER")
+	if val, ok := specialusers[u.Name]; ok {
+		// replace $HOME also, if path was set user specific
+		path = strings.Replace(val, "$HOME", u.HomeDir, 1)
 	}
 	return path
 }
-
-
 
 func init() {
 	c,err := api.NewClient(&api.Config{

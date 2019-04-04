@@ -34,11 +34,11 @@ UMASK: 027
 # This configuration acts similarly to sudo -u <username>
 # All other plugins treat user A as if he were user B
 # e.g. instead of using /home/userA/.vault_roleid, use /home/userB/.vault_roleid
-# as $HOME in $FILE_ROLEID
-#                                 =                              =
+# as $HOME in $FILE_ROLEID        =                              =
+# Works recursively
 #
 # ALIAS_USER:
-#   <userA>: <userB>
+#   <usernameA>: <usernameB>
 
 ### FIO
 ENABLED_FIOS:
@@ -56,12 +56,20 @@ CURRENT_STORE: Vault
 # path configuration defines, where to look for the vault roleid token
 # $HOME will be substituted with the user's corresponding home directory
 # according to variable HomeDir in https://golang.org/pkg/os/user/#User
-FILE_ROLEID: "$HOMEDIR/.vault-roleid"
 # old: FILE_ROLEID: .vault-roleid
+FILE_ROLEID: "$HOMEDIR/.vault-roleid"
+
+# FILE_ROLEID_USER configures paths per user, may be used to overwrite default
+# FILE_ROLEID for some users
+# takes precedence over FILE_ROLEID
+# FILE_ROLEID_USER will *NOT* fallback to FILE_ROLEID
+#FILE_ROLEID_USER:
+#  <usernameA>: <path>
 VAULT_ADDR: http://127.0.0.1:8200
 # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
 MTDATA: secret/metadata/
 DTDATA: secret/data/
+
 
 # fuse does not allow the character '/' inside of names of directories or files
 # in vault k=v pairs of one secret will be shown as files, where k is the name
