@@ -30,6 +30,15 @@ LOGFILEPERM: 0640
 WORKDIR: "./"
 UMASK: 027
 
+# ALIAS USER
+# This configuration acts similarly to sudo -u <username>
+# All other plugins treat user A as if he were user B
+# e.g. instead of using /home/userA/.vault_roleid, use /home/userB/.vault_roleid
+# as $HOME in $FILE_ROLEID
+#                                 =                              =
+#
+# ALIAS_USER:
+#   <userA>: <userB>
 
 ### FIO
 ENABLED_FIOS:
@@ -44,7 +53,11 @@ PATH_TO_TEMPLATES: /etc/secretsfs/templates/
 CURRENT_STORE: Vault
 
 # vault
-FILE_ROLEID: .vault-roleid
+# path configuration defines, where to look for the vault roleid token
+# $HOME will be substituted with the user's corresponding home directory
+# according to variable HomeDir in https://golang.org/pkg/os/user/#User
+FILE_ROLEID: "$HOMEDIR/.vault-roleid"
+# old: FILE_ROLEID: .vault-roleid
 VAULT_ADDR: http://127.0.0.1:8200
 # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
 MTDATA: secret/metadata/
@@ -56,6 +69,7 @@ DTDATA: secret/data/
 # Those slashes will be substituted with the following character
 # may also use some special characters, e.g. '§' or '°'
 subst_char: _
+
 `)
 
 // InitConfig reads all configurations and sets them.
