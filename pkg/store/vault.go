@@ -230,8 +230,7 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 
 // readAuthToken opens the file containing the authenticationtoken and trims it
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
-	// path := filepath.Join(u.HomeDir, os.Getenv("SECRETSFS_FILE_ROLEID"))
-	path := filepath.Join(u.HomeDir, viper.GetString("FILE_ROLEID"))
+	path := finIdPath(u)
 	Log.Debug.Printf("msg=\"reading authToken\" path=\"%v\"\n",path)
 	o,err := ioutil.ReadFile(path)
 	if err != nil {
@@ -404,7 +403,20 @@ func (v *Vault) getCorrectName(pathname string, nameonly bool) (string, bool, er
 	return "", false, errors.New("can't find any substituted possibilties for value "+value)
 }
 
+// finIdPath returns the resolved path of the users vault roleid file path.
+// This means that $HOME will be resolved to the users homedirectory, and that
+// the users alias is applied
+func finIdPath(u *user.User) (string) {
+	path := filepath.Join(u.HomeDir, viper.GetString("FILE_ROLEID"))
+	path = strings.Replace(path, "$HOME", u.HomeDir, 1)
 
+	aus := viper.GetStringMapString("ALIAS_USER")
+	if val, ok := aus[u.Name]; ok {
+		newu, _ :=  user.Lookup(val)
+		path = finIdPath(newu)
+	}
+	return path
+}
 
 
 
