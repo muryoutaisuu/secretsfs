@@ -30,7 +30,6 @@ LOGFILEPERM: 0640
 WORKDIR: "./"
 UMASK: 027
 
-
 ### FIO
 ENABLED_FIOS:
 - secretsfiles
@@ -44,11 +43,23 @@ PATH_TO_TEMPLATES: /etc/secretsfs/templates/
 CURRENT_STORE: Vault
 
 # vault
-FILE_ROLEID: .vault-roleid
+# path configuration defines, where to look for the vault roleid token
+# $HOME will be substituted with the user's corresponding home directory
+# according to variable HomeDir in https://golang.org/pkg/os/user/#User
+# old: FILE_ROLEID: .vault-roleid
+FILE_ROLEID: "$HOMEDIR/.vault-roleid"
+
+# FILE_ROLEID_USER configures paths per user, may be used to overwrite default
+# FILE_ROLEID for some users
+# takes precedence over FILE_ROLEID
+# FILE_ROLEID_USER will *NOT* fallback to FILE_ROLEID
+#FILE_ROLEID_USER:
+#  <usernameA>: <path>
 VAULT_ADDR: http://127.0.0.1:8200
 # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
 MTDATA: secret/metadata/
 DTDATA: secret/data/
+
 
 # fuse does not allow the character '/' inside of names of directories or files
 # in vault k=v pairs of one secret will be shown as files, where k is the name
@@ -56,6 +67,7 @@ DTDATA: secret/data/
 # Those slashes will be substituted with the following character
 # may also use some special characters, e.g. '§' or '°'
 subst_char: _
+
 `)
 
 // InitConfig reads all configurations and sets them.
