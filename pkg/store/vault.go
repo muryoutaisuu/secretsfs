@@ -416,14 +416,37 @@ func finIdPath(u *user.User) (string) {
 	return path
 }
 
+func configureTLS(c *api.Config) error {
+	tls := api.TLSConfig{}
+	if viper.IsSet("HTTPS_CACERT") { tls.CACert = viper.GetString("HTTPS_CACERT") }
+	if viper.IsSet("HTTPS_CAPATH") { tls.CAPath = viper.GetString("HTTPS_CAPATH") }
+	if viper.IsSet("HTTPS_CLIENTCERT") { tls.ClientCert = viper.GetString("HTTPS_CLIENTCERT") }
+	if viper.IsSet("HTTPS_CLIENTKEY") { tls.ClientKey = viper.GetString("HTTPS_CLIENTKEY") }
+	if viper.IsSet("HTTPS_TLSSERVERNAME") { tls.TLSServerName = viper.GetString("HTTPS_TLSSERVERNAME") }
+	if viper.IsSet("HTTPS_INSECURE") { tls.Insecure = viper.GetBool("HTTPS_INSECURE") }
+	return c.ConfigureTLS(&tls)
+}
+
 func init() {
-	c,err := api.NewClient(&api.Config{
-		// Address: os.Getenv("VAULT_ADDR"),
-		Address: viper.GetString("VAULT_ADDR"),
-	})
+	a := viper.GetString("VAULT_ADDR")
+	// create first config type
+	conf := api.DefaultConfig()
+	conf.Address = a
+
+	// check whether TLS is needed
+	if a[:5] == "https" {
+		if err := configureTLS(conf); err != nil {
+			Log.Error.Fatal(err)
+		}
+	}
+
+	// create client
+	c,err := api.NewClient(conf)
 	if err != nil {
 		Log.Error.Fatal(err)
 	}
+
+	// create vault object & register it
 	v := Vault{
 		client: c,
 	}
