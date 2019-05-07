@@ -16,3 +16,6 @@ testing.go
 sourceit
 *.swp
 secretsfs
+
+# custom go thingies
+go.sum
