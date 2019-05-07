@@ -12,8 +12,6 @@ import (
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
-	"github.com/sevlyar/go-daemon"
-	"github.com/spf13/viper"
 
 	"github.com/muryoutaisuu/secretsfs/cmd/secretsfs/config"
 	"github.com/muryoutaisuu/secretsfs/pkg/fio"
@@ -29,7 +27,6 @@ func main() {
 	var defaults = flag.Bool("print-defaults", false, "prints default configurations")
 	var stores = flag.Bool("print-stores", false, "prints available stores")
 	var fios = flag.Bool("print-fios", false, "prints available FIOs")
-	var foreground = flag.Bool("foreground", false, "run in foreground")
 
 	firstdashed := firstDashedArg(os.Args)
 	flag.CommandLine.Parse(os.Args[firstdashed:])
@@ -84,45 +81,17 @@ func main() {
 	// set options
 	fsopts := fuse.MountOptions{}
 	log.Println(*opts)
+	fsopts.Options = strings.Split(*opts, ",")
 
-
-	// https://github.com/sevlyar/go-daemon/blob/master/examples/cmd/gd-simple/simple.go
-
-	if *foreground {
-		fsopts.Options = strings.Split(*opts, ",")
-
-		// create server
-		server, err := fuse.NewServer(fsc.RawFS(), mountpoint, &fsopts)
-		if err != nil {
-			log.Printf("Mountfail: %v\n", err)
-			os.Exit(1)
-		}
-		// mount and now serve me till the end!!!
-		server.Serve()
-		defer server.Unmount()
-	} else {
-		//newargs := append(os.Args, "-foreground")
-		log.Println("logFileName is: ", viper.GetString("logFileName"))
-		cntxt := &daemon.Context{
-			PidFileName: viper.GetString("PIDFILENAME"),
-			PidFilePerm: os.FileMode(viper.GetInt("PIDFILEPERM")),
-			LogFileName: viper.GetString("LOGFILENAME"),
-			LogFilePerm: os.FileMode(viper.GetInt("LOGFILEPERM")),
-			WorkDir:     viper.GetString("WORKDIR"),
-			Umask:       viper.GetInt("UMASK"),
-			Args:        append(os.Args, "-foreground"),
-		}
-
-		d, err := cntxt.Reborn()
-		if err != nil {
-			log.Fatal("Unable to run: ", err)
-		}
-		if d != nil {
-			return
-		}
-		defer cntxt.Release()
+	// create server
+	server, err := fuse.NewServer(fsc.RawFS(), mountpoint, &fsopts)
+	if err != nil {
+		log.Printf("Mountfail: %v\n", err)
+		os.Exit(1)
 	}
-
+	// mount and now serve me till the end!!!
+	server.Serve()
+	defer server.Unmount()
 	return
 }
 
