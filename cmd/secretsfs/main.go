@@ -20,6 +20,7 @@ import (
 )
 
 func main() {
+	// ARGUMENT THINGIES START
 	// parse arguments & flags
 	flag.Usage = usage
 	var opts = flag.String("o","","Options passed through to fuse")
@@ -68,6 +69,7 @@ func main() {
 	}
 	mountpoint := os.Args[1]
 	log.Println("mountpoint is: "+mountpoint)
+	// ARGUMENT THINGIES END
 
 	// create the filesystem object
 	sfs,err := secretsfs.NewSecretsFS(pathfs.NewDefaultFileSystem(), fio.FIOMaps(), store.GetStore())
