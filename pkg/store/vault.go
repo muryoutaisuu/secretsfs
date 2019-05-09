@@ -83,8 +83,10 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 			Mode: fuse.S_IFREG | 0550,
 			Size: uint64(len(name)),
 		}, fuse.OK
-	default:
-		return nil, fuse.ENOENT
+	default: // probably not enough permissions to determine type -> would probably be a directory
+		return &fuse.Attr{
+			Mode: fuse.S_IFDIR | 0000,
+		}, fuse.OK
 	}
 }
 
@@ -243,8 +245,8 @@ func (v *Vault) readAuthToken(u *user.User) (string, error) {
 
 // listDir lists all entries inside a vault directory type=CTrueDir
 func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
-	Log.Debug.Printf("op=listDir MTDATA=\"%v\" name=\"%v\"\n",MTDATA,name)
-	s,err := v.client.Logical().List(MTDATA + name)
+	Log.Debug.Printf("op=listDir MTDATA=\"%v\" name=\"%v/\"\n",MTDATA,name)
+	s,err := v.client.Logical().List(MTDATA + name+"/")
 	Log.Debug.Printf("secret=\"%v\"\n",s)
 
 	// can't list in vault
@@ -331,8 +333,8 @@ func (v *Vault) listFileNames(name string) ([]string, error) {
 // types may be the defined FileType byte constants on top of this file
 func (v *Vault) getType(name string) (*api.Secret, Filetype){
 	Log.Debug.Printf("op=getType name=\"%v\"\n",name)
-	s,err := v.client.Logical().List(MTDATA + name)
-	Log.Debug.Printf("op=getType MTDATA=%s\n",MTDATA)
+	Log.Debug.Printf("op=getType path=%s\n",MTDATA+name+"/")
+	s,err := v.client.Logical().List(MTDATA + name + "/")
 	Log.Debug.Printf("op=getType s=\"%v\" err=\"%v\"\n",s,err)
 	if err == nil && s != nil {
 		return s, CTrueDir
