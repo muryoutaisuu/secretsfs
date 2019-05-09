@@ -58,8 +58,8 @@ FILE_ROLEID: "$HOMEDIR/.vault-roleid"
 #  <usernameA>: <path>
 VAULT_ADDR: http://127.0.0.1:8200
 # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
-MTDATA: secret/metadata/
-DTDATA: secret/data/
+MTDATA: secret/
+DTDATA: secret/
 
 
 # fuse does not allow the character '/' inside of names of directories or files
