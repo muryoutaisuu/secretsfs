@@ -23,12 +23,12 @@ var configDefaults = []byte(`
 # CONFIG_FILE: secretsfs  # without file type
 
 # HTTPS Configurations
-# HTTPS_CACERT = <path to PEM-encoded CA file>
-# HTTPS_CAPATH = <path to directory of PEM-encoded CA files>
-# HTTPS_CLIENTCERT = <path to certificate for backend communication>
-# HTTPS_CLIENTKEY = <path to private key for backend communication>
-# HTTPS_TLSSERVERNAME = <used for setting SNI host>
-# HTTPS_INSECURE = <disable TLS verification>
+# HTTPS_CACERT: <path to PEM-encoded CA file>
+# HTTPS_CAPATH: <path to directory of PEM-encoded CA files>
+# HTTPS_CLIENTCERT: <path to certificate for backend communication>
+# HTTPS_CLIENTKEY: <path to private key for backend communication>
+# HTTPS_TLSSERVERNAME: <used for setting SNI host>
+# HTTPS_INSECURE: <disable TLS verification>
 
 
 ### FIO
