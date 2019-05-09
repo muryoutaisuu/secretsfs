@@ -40,7 +40,7 @@ CURRENT_STORE: Vault
 # $HOME will be substituted with the user's corresponding home directory
 # according to variable HomeDir in https://golang.org/pkg/os/user/#User
 # old: FILE_ROLEID: .vault-roleid
-FILE_ROLEID: "$HOMEDIR/.vault-roleid"
+FILE_ROLEID: "$HOME/.vault-roleid"
 
 # FILE_ROLEID_USER configures paths per user, may be used to overwrite default
 # FILE_ROLEID for some users

@@ -403,7 +403,7 @@ func (v *Vault) getCorrectName(pathname string, nameonly bool) (string, bool, er
 }
 
 // finIdPath returns the resolved path of the users vault roleid file path.
-// This means that $HOME will be resolved to the users homedirectory, and that
+// This means that $HOME will be resolved to the users home directory, and that
 // the users alias is applied
 func finIdPath(u *user.User) (string) {
 	path := strings.Replace(viper.GetString("FILE_ROLEID"), "$HOME", u.HomeDir, 1)
