@@ -44,8 +44,8 @@ type Vault struct {
 
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	Log.Debug.Printf("ops=GetAttr name=\"%v\"\n",name)
-	Log.Debug.Printf("ops=GetAttr MTDATA=%s",viper.GetString("MTDATA"))
-	Log.Debug.Printf("ops=GetAttr Token=%s",v.client.Token())
+	Log.Debug.Printf("ops=GetAttr MTDATA=%s\n",viper.GetString("MTDATA"))
+	Log.Debug.Printf("ops=GetAttr Token=%s\n",v.client.Token())
 
 	// opening directory (aka secretsfiles/)
 	if name == "" {
@@ -83,8 +83,10 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 			Mode: fuse.S_IFREG | 0550,
 			Size: uint64(len(name)),
 		}, fuse.OK
-	default:
-		return nil, fuse.ENOENT
+	default: // probably not enough permissions to determine type -> would probably be a directory
+		return &fuse.Attr{
+			Mode: fuse.S_IFDIR | 0000,
+		}, fuse.OK
 	}
 }
 
@@ -243,8 +245,8 @@ func (v *Vault) readAuthToken(u *user.User) (string, error) {
 
 // listDir lists all entries inside a vault directory type=CTrueDir
 func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
-	Log.Debug.Printf("op=listDir MTDATA=\"%v\" name=\"%v\"",MTDATA,name)
-	s,err := v.client.Logical().List(MTDATA + name)
+	Log.Debug.Printf("op=listDir MTDATA=\"%v\" name=\"%v/\"\n",MTDATA,name)
+	s,err := v.client.Logical().List(MTDATA + name+"/")
 	Log.Debug.Printf("secret=\"%v\"\n",s)
 
 	// can't list in vault
@@ -331,8 +333,8 @@ func (v *Vault) listFileNames(name string) ([]string, error) {
 // types may be the defined FileType byte constants on top of this file
 func (v *Vault) getType(name string) (*api.Secret, Filetype){
 	Log.Debug.Printf("op=getType name=\"%v\"\n",name)
-	s,err := v.client.Logical().List(MTDATA + name)
-	Log.Debug.Printf("op=getType MTDATA=%s",MTDATA)
+	Log.Debug.Printf("op=getType path=%s\n",MTDATA+name+"/")
+	s,err := v.client.Logical().List(MTDATA + name + "/")
 	Log.Debug.Printf("op=getType s=\"%v\" err=\"%v\"\n",s,err)
 	if err == nil && s != nil {
 		return s, CTrueDir
@@ -416,21 +418,49 @@ func finIdPath(u *user.User) (string) {
 	return path
 }
 
+func configureTLS(c *api.Config) error {
+	tls := api.TLSConfig{}
+	if viper.IsSet("HTTPS_CACERT") { tls.CACert = viper.GetString("HTTPS_CACERT") }
+	if viper.IsSet("HTTPS_CAPATH") { tls.CAPath = viper.GetString("HTTPS_CAPATH") }
+	if viper.IsSet("HTTPS_CLIENTCERT") { tls.ClientCert = viper.GetString("HTTPS_CLIENTCERT") }
+	if viper.IsSet("HTTPS_CLIENTKEY") { tls.ClientKey = viper.GetString("HTTPS_CLIENTKEY") }
+	if viper.IsSet("HTTPS_TLSSERVERNAME") { tls.TLSServerName = viper.GetString("HTTPS_TLSSERVERNAME") }
+	if viper.IsSet("HTTPS_INSECURE") { tls.Insecure = viper.GetBool("HTTPS_INSECURE") }
+	Log.Debug.Printf("op=init tls=%v\n",tls)
+	err :=  c.ConfigureTLS(&tls)
+	if c.Error != nil { return c.Error }
+	return err
+}
+
 func init() {
-	c,err := api.NewClient(&api.Config{
-		// Address: os.Getenv("VAULT_ADDR"),
-		Address: viper.GetString("VAULT_ADDR"),
-	})
+	a := viper.GetString("VAULT_ADDR")
+	// create first config type
+	conf := api.DefaultConfig()
+	conf.Address = a
+
+	// check whether TLS is needed
+	if a[:5] == "https" {
+		if err := configureTLS(conf); err != nil {
+			Log.Error.Fatal(err)
+		}
+		Log.Debug.Printf("op=init conf=%v\n",conf)
+	}
+
+	// create client
+	c,err := api.NewClient(conf)
 	if err != nil {
 		Log.Error.Fatal(err)
 	}
+	Log.Debug.Printf("op=init client=%v\n",c)
+
+	// create vault object & register it
 	v := Vault{
 		client: c,
 	}
 	v.client.ClearToken()
 	RegisterStore(&v) //https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
 	if viper.GetString("CURRENT_STORE") == v.String() {
-		Log.Debug.Printf("op=init MTDATA=%s",viper.GetString("MTDATA"))
+		Log.Debug.Printf("op=init MTDATA=%s\n",viper.GetString("MTDATA"))
 		MTDATA = viper.GetString("MTDATA")
 		DTDATA = viper.GetString("DTDATA")
 	}

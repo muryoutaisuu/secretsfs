@@ -22,6 +22,14 @@ var configDefaults = []byte(`
 # - $HOME/.secretsfs
 # CONFIG_FILE: secretsfs  # without file type
 
+# HTTPS Configurations
+# HTTPS_CACERT: <path to PEM-encoded CA file>
+# HTTPS_CAPATH: <path to directory of PEM-encoded CA files>
+# HTTPS_CLIENTCERT: <path to certificate for backend communication>
+# HTTPS_CLIENTKEY: <path to private key for backend communication>
+# HTTPS_TLSSERVERNAME: <used for setting SNI host>
+# HTTPS_INSECURE: <disable TLS verification>
+
 
 ### FIO
 ENABLED_FIOS:
@@ -50,8 +58,8 @@ FILE_ROLEID: "$HOME/.vault-roleid"
 #  <usernameA>: <path>
 VAULT_ADDR: http://127.0.0.1:8200
 # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
-MTDATA: secret/metadata/
-DTDATA: secret/data/
+MTDATA: secret/
+DTDATA: secret/
 
 
 # fuse does not allow the character '/' inside of names of directories or files
