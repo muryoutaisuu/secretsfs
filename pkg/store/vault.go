@@ -156,11 +156,11 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 		Log.Debug.Printf("op=Open msg=\"after substituting name\" variable=name value=%v\n",name)
 
 		Log.Debug.Printf("op=Open s=\"%v\" name=\"%v\"\n",s,name)
-		data,ok := s.Data["data"].(map[string]interface{})
-		if ok != true {
-			return "", fuse.EIO
-		}
-		entry,ok := data[name].(string)
+		//data,ok := s.Data["data"].(map[string]interface{})
+		//if ok != true {
+		//	return "", fuse.EIO
+		//}
+		entry,ok := s.Data[name].(string)
 		if ok != true {
 			return "", fuse.EIO
 		}
