@@ -315,14 +315,9 @@ func (v *Vault) listFileNames(name string) ([]string, error) {
 	}
 	Log.Debug.Printf("op=listFile secret=\"%v\"\n",s)
 	Log.Debug.Printf("op=listFile secret.Data=\"%v\" secret.DataType=\"%T\"\n",s.Data,s.Data)
-	data,ok := s.Data["data"].(map[string]interface{})
-	if !ok {
-		return nil, errors.New("s.Data[\"data\"] resulted in a error")
-	}
-	Log.Debug.Printf("op=listFileNames data=\"%v\" dataType=\"%T\"\n",data,data)
 
   filenames := []string{}
-	for k := range data {
+	for k := range s.Data {
 		filenames = append(filenames, k)
 	}
 	return filenames, nil
