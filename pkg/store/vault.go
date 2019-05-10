@@ -156,11 +156,11 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 		Log.Debug.Printf("op=Open msg=\"after substituting name\" variable=name value=%v\n",name)
 
 		Log.Debug.Printf("op=Open s=\"%v\" name=\"%v\"\n",s,name)
-		data,ok := s.Data["data"].(map[string]interface{})
-		if ok != true {
-			return "", fuse.EIO
-		}
-		entry,ok := data[name].(string)
+		//data,ok := s.Data["data"].(map[string]interface{})
+		//if ok != true {
+		//	return "", fuse.EIO
+		//}
+		entry,ok := s.Data[name].(string)
 		if ok != true {
 			return "", fuse.EIO
 		}
@@ -315,14 +315,9 @@ func (v *Vault) listFileNames(name string) ([]string, error) {
 	}
 	Log.Debug.Printf("op=listFile secret=\"%v\"\n",s)
 	Log.Debug.Printf("op=listFile secret.Data=\"%v\" secret.DataType=\"%T\"\n",s.Data,s.Data)
-	data,ok := s.Data["data"].(map[string]interface{})
-	if !ok {
-		return nil, errors.New("s.Data[\"data\"] resulted in a error")
-	}
-	Log.Debug.Printf("op=listFileNames data=\"%v\" dataType=\"%T\"\n",data,data)
 
   filenames := []string{}
-	for k := range data {
+	for k := range s.Data {
 		filenames = append(filenames, k)
 	}
 	return filenames, nil
