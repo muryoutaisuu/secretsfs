@@ -60,25 +60,19 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 	}
 	defer Log.Debug.Printf("op=GetAttr msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 	defer v.client.ClearToken()
-	defer Log.Debug.Printf("op=GetAttr msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 
 	// get type
 	Log.Debug.Printf("name=\"%v\"\n",name)
-	_,t := v.getType(name)
+	_, t := v.getTypes(name)
 	Log.Debug.Printf("op=GetAttr t=\"%v\"\n",t)
 
 	// act according to type
-	switch t {
-	case CTrueDir:
+	switch {
+	case t[CTrueDir], t[CFile]:
 		return &fuse.Attr{
 			Mode: fuse.S_IFDIR | 0550,
 		}, fuse.OK
-	case CFile:
-		Log.Debug.Printf("op=GetAttr t=CFile\n")
-		return &fuse.Attr{
-			Mode: fuse.S_IFDIR | 0550,
-		}, fuse.OK
-	case CValue:
+	case t[CValue]:
 		return &fuse.Attr{
 			Mode: fuse.S_IFREG | 0550,
 			Size: uint64(len(name)),
@@ -100,29 +94,39 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 	defer Log.Debug.Printf("op=OpenDir msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 	defer v.client.ClearToken()
 
-	_,t := v.getType(name)
+	_, t := v.getTypes(name)
 	Log.Debug.Printf("ops=OpenDir t=\"%v\"\n",t)
 
-	switch t {
-	case CTrueDir:
+	findirs := []fuse.DirEntry{}
+		//d := fuse.DirEntry{
+		//	Name:  path.Base(s.Data["keys"].([]interface{})[i].(string)),
+		//	Mode: fuse.S_IFREG,
+		//}
+		//dirs = append(dirs, d)
+
+	if t[CTrueDir] {
 		dirs,err := v.listDir(name)
-		if err != nil {
-			Log.Error.Print(err)
-			return *dirs, fuse.EIO
-		}
-		Log.Debug.Printf("op=OpenDir name=\"%v%v\" dirs=\"%v\" err=\"%v\"\n",MTDATA,name,dirs,err)
-		return *dirs, fuse.OK
-	case CFile:
-		dirs,err := v.listFile(name)
-		Log.Debug.Printf("op=OpenDir dirs=\"%v\" err=\"%v\"\n",dirs,err)
-		if err != nil {
+		if err != nil && !t[CFile] {
 			Log.Error.Print(err)
 			return nil, fuse.EIO
 		}
+		findirs = append(findirs, *dirs...)
+		Log.Debug.Printf("op=OpenDir name=\"%v%v\" dirs=\"%v\" err=\"%v\"\n",MTDATA,name,dirs,err)
+	}
+	if t[CFile] {
+		dirs,err := v.listFile(name)
+		if err != nil && !t[CTrueDir] {
+			Log.Error.Print(err)
+			return nil, fuse.EIO
+		}
+		findirs = append(findirs, *dirs...)
 		Log.Debug.Printf("op=OpenDir ctype=CFile secretType=\"%T\" secret=\"%v\"\n",dirs,dirs)
-		return *dirs, fuse.OK
-	case CValue:
+	}
+	if t[CValue] {
 		return nil, fuse.ENOTDIR
+	}
+	if len(findirs) > 0 {
+		return findirs, fuse.OK
 	}
 	return nil, fuse.ENOENT
 }
@@ -137,15 +141,15 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 	defer Log.Debug.Printf("op=Open msg=\"successfully cleared token\" token=%s\"\n",v.client.Token())
 	defer v.client.ClearToken()
 
-	s,t := v.getType(name)
+	s,t := v.getTypes(name)
 	Log.Debug.Printf("op=Open t=\"%v\"\n",t)
 
-	switch t {
-	case CTrueDir:
+	switch {
+	case t[CTrueDir]:
 		return "", fuse.EISDIR
-	case CFile:
+	case t[CFile]:
 		return "", fuse.EISDIR
-	case CValue:
+	case t[CValue]:
 		// get substituted value (if substitution must be done, else keep original)
 		Log.Debug.Printf("op=Open msg=\"before substituting name\" variable=name value=%v\n",name)
 		name, _, err := v.getCorrectName(name, true)
@@ -155,8 +159,8 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 		}
 		Log.Debug.Printf("op=Open msg=\"after substituting name\" variable=name value=%v\n",name)
 
-		Log.Debug.Printf("op=Open s=\"%v\" name=\"%v\"\n",s,name)
-		data,ok := s.Data["data"].(map[string]interface{})
+		Log.Debug.Printf("op=Open s=\"%v\" name=\"%v\"\n",s[CValue],name)
+		data,ok := s[CValue].Data["data"].(map[string]interface{})
 		if ok != true {
 			return "", fuse.EIO
 		}
@@ -315,9 +319,11 @@ func (v *Vault) listFileNames(name string) ([]string, error) {
 	}
 	Log.Debug.Printf("op=listFile secret=\"%v\"\n",s)
 	Log.Debug.Printf("op=listFile secret.Data=\"%v\" secret.DataType=\"%T\"\n",s.Data,s.Data)
-	data,ok := s.Data["data"].(map[string]interface{})
+	//data,ok := s.Data["data"].(map[string]interface{})
+	data,ok := s.Data["keys"].(map[string]interface{})
 	if !ok {
-		return nil, errors.New("s.Data[\"data\"] resulted in a error")
+		return nil, errors.New("s.Data[\"keys\"] resulted in a error")
+		//return nil, errors.New("s.Data[\"data\"] resulted in a error")
 	}
 	Log.Debug.Printf("op=listFileNames data=\"%v\" dataType=\"%T\"\n",data,data)
 
@@ -352,6 +358,37 @@ func (v *Vault) getType(name string) (*api.Secret, Filetype){
 	}
 
 	return nil, CNull
+}
+
+// getTypes returns similar to getType the types of the requested resources
+// imagine following situation:
+//   secret/foo
+//   secret/foo/
+//   secret/foo/bar
+// here foo is a secret as well as a subdirectory. It should be possible, to
+// get both those types
+func (v *Vault) getTypes(name string) (map[Filetype]*api.Secret, map[Filetype]bool) {
+	Log.Debug.Printf("op=getType name=\"%v\"\n",name)
+	Log.Debug.Printf("op=getType path=%s\n",MTDATA+name+"/")
+
+	r := make(map[Filetype]bool)
+	rs := make(map[Filetype]*api.Secret)
+
+	s,err := v.client.Logical().List(MTDATA + name + "/")
+	Log.Debug.Printf("op=getType s=\"%v\" err=\"%v\"\n",s,err)
+	r[CTrueDir] = err == nil && s != nil
+	rs[CTrueDir] = s
+
+	s,err = v.client.Logical().Read(DTDATA + name)
+	r[CFile] = err == nil && s != nil
+	rs[CFile] = s
+
+	name = path.Dir(name) // clip last element
+	s,err = v.client.Logical().Read(DTDATA + name)
+	r[CValue] = err == nil && s != nil
+	rs[CValue] = s
+
+	return rs,r
 }
 
 // getCorrectName checks whether a path contains any maybe substituted characters.
