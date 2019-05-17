@@ -46,6 +46,7 @@ mkdir /mnt/secretsfs                                # create the default mountpo
 cd $GOPATH/src/github.com/muryoutaisuu/secretsfs    # change to directory
 ./vault-setup.sh                                    # setup vault, just following instructions on screen
                                                     # yes, I was too lazy to do some string parsing
+. sourceit                                          # source some environment variables
 ./clean.sh                                          # this umounts potentially existing old mounts, build secretsfs anew and mounts it
                                                     # Type <ENTER> so you can see your prompt again
 ls /mnt/secretsfs/secretsfiles                      # look at entries inside of that new secretsfs
@@ -74,21 +75,18 @@ go install ./cmd/secretsfs                          # install secretsfs
 
 ## Start *secretsfs*
 
-There are three possible ways to start *secretsfs*:
+There are two possible ways to start *secretsfs*:
 
-* Start it manually with `secretsfs <mountpath> [-o <mountoptions>] [-foreground [&]]`
+* Start it manually with `secretsfs <mountpath> [-o <mountoptions>] [&]]`
 * Start it with Systemd, use the predefined service in the examples folder
 ** `cp example/secretsfs.service /usr/lib/systemd/system/secretsfs.service`
-** `systemctl enable secretsfs`
 ** `systemctl start secretsfs`
-* Start it with fstab, use the predefined line in the examples folder
-** `cat example/secretsfs.fstab >> /etc/fstab`
-** `mount -a`
+** `systemctl enable secretsfs`
 
 # Known Issues
 
 * **Substitution:** `a/b` may be substituted to `a_b`, which may also already be in the backend (e.g. Vault). This will likely cause a clash. As a workaround either configure `subst_char` in the configuration file to a different value, or do not use `/` in Vault key names at all. If clashing, the alphabetically first key name will have precedence (in this case it would be `a/b`).
-* **Background use:** if *secretsfs* is used in background, it will start itself with the `-foreground` parameter. This causes the process in `ps -ef` to be shown with the `-foreground` flag although the user started it without the -foreground flag. It's a rather aestethic issue.
+* In Vault, both paths `/secret/foo` and `/secret/foo/` may exist, where the former is a secret and the latter is a subpath. Filesystems know no difference between a path with and one without the `/` at the end. Hence Both validate to the same path. In _secretsfs_ this results into the keys of `/secret/foo` being displayed as files next to the subdirectory `/secret/foo/`, while in reality those two are not connected in any way to each other in Vault.
 
 # Varia
 

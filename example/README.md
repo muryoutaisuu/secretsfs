@@ -14,6 +14,15 @@ The default configuration of secretsfs may be output with the command `./secrets
 # - $HOME/.secretsfs
 # CONFIG_FILE: secretsfs  # without file type
 
+# HTTPS Configurations
+# HTTPS_CACERT: <path to PEM-encoded CA file>
+# HTTPS_CAPATH: <path to directory of PEM-encoded CA files>
+# HTTPS_CLIENTCERT: <path to certificate for backend communication>
+# HTTPS_CLIENTKEY: <path to private key for backend communication>
+# HTTPS_TLSSERVERNAME: <used for setting SNI host>
+# HTTPS_INSECURE: <disable TLS verification>
+
+
 ### FIO
 ENABLED_FIOS:
 - secretsfiles
@@ -22,15 +31,28 @@ ENABLED_FIOS:
 # templatefiles
 PATH_TO_TEMPLATES: /etc/secretsfs/templates/
 
+
 ### STORE
 CURRENT_STORE: Vault
 
 # vault
-FILE_ROLEID: .vault-roleid
+# path configuration defines, where to look for the vault roleid token
+# $HOME will be substituted with the user's corresponding home directory
+# according to variable HomeDir in https://golang.org/pkg/os/user/#User
+# old: FILE_ROLEID: .vault-roleid
+FILE_ROLEID: "$HOME/.vault-roleid"
+
+# FILE_ROLEID_USER configures paths per user, may be used to overwrite default
+# FILE_ROLEID for some users
+# takes precedence over FILE_ROLEID
+# FILE_ROLEID_USER will *NOT* fallback to FILE_ROLEID
+#FILE_ROLEID_USER:
+#  <usernameA>: <path>
 VAULT_ADDR: http://127.0.0.1:8200
 # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
-MTDATA: secret/metadata/
-DTDATA: secret/data/
+MTDATA: secret/
+DTDATA: secret/
+
 
 # fuse does not allow the character '/' inside of names of directories or files
 # in vault k=v pairs of one secret will be shown as files, where k is the name
@@ -77,16 +99,3 @@ Mountoptions may be given like in a normal mount command, e.g.:
 ```
 ./secretsfs <mountpath> -o allow_other
 ```
-
-### fstab Configuration
-
-Does not yet work.
-Problem is, that _secretsfs_ isn't yet daemonized, and hence the tool will run without returning the prompt, which is problematic for fstab mounts.
-
-Nevertheless, a working fstab configuration would look like:
-
-```fstab
-secretsfs       /mnt/fstabsecretsfs     fuse    allow_other     0 0
-```
-
-_Note: Also see the file called fstab_
