@@ -407,25 +407,41 @@ func (v *Vault) getType(name string) (*api.Secret, Filetype){
 // here foo is a secret as well as a subdirectory. It should be possible, to
 // get both those types
 func (v *Vault) getTypes(name string) (map[Filetype]*api.Secret, map[Filetype]bool) {
-	Log.Debug.Printf("op=getType name=\"%v\"\n",name)
-	Log.Debug.Printf("op=getType path=%s\n",MTDATA+name+"/")
+	Log.Debug.Printf("op=getTypes name=\"%v\"\n",name)
+	Log.Debug.Printf("op=getTypes path=%s\n",MTDATA+name+"/")
 
 	r := make(map[Filetype]bool)
 	rs := make(map[Filetype]*api.Secret)
 
 	s,err := v.client.Logical().List(MTDATA + name + "/")
-	Log.Debug.Printf("op=getType s=\"%v\" err=\"%v\"\n",s,err)
+	Log.Debug.Printf("op=getTypes s=\"%v\" err=\"%v\"\n",s,err)
 	r[CTrueDir] = err == nil && s != nil
 	rs[CTrueDir] = s
 
 	s,err = v.client.Logical().Read(DTDATA + name)
+	Log.Debug.Printf("op=getTypes s=\"%v\" err=\"%v\"\n",s,err)
 	r[CFile] = err == nil && s != nil
 	rs[CFile] = s
 
-	name = path.Dir(name) // clip last element
-	s,err = v.client.Logical().Read(DTDATA + name)
-	r[CValue] = err == nil && s != nil
-	rs[CValue] = s
+	// if else statement here is needed, case of:
+	//   E1							->  secret
+	//   E1/mysecret = 42
+	//   E1/						->  subdir in Vault
+	//   E1/subsecret		-> secret
+	//   E1/subsecret/mysecret = 43
+	// this would have thrown an error, because for E1/subsecret/mysecret it would
+	// have r[CFile] == true AND r[CValue] == true
+	// this would cause errors in any further calculations
+	if !r[CFile] {
+		name = path.Dir(name) // clip last element
+		s,err = v.client.Logical().Read(DTDATA + name)
+		Log.Debug.Printf("op=getTypes s=\"%v\" err=\"%v\"\n",s,err)
+		r[CValue] = err == nil && s != nil
+		rs[CValue] = s
+	} else {
+		r[CValue] = false
+		rs[CValue] = nil
+	}
 
 	return rs,r
 }
