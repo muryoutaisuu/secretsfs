@@ -8,6 +8,7 @@ import (
 	"os/user"
 	"strings"
 	"path"
+	"path/filepath"
 
 	"github.com/hashicorp/vault/api"
 	"github.com/hanwen/go-fuse/fuse"
@@ -97,35 +98,37 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 	_, t := v.getTypes(name)
 	Log.Debug.Printf("ops=OpenDir t=\"%v\"\n",t)
 
-	findirs := []fuse.DirEntry{}
-		//d := fuse.DirEntry{
-		//	Name:  path.Base(s.Data["keys"].([]interface{})[i].(string)),
-		//	Mode: fuse.S_IFREG,
-		//}
-		//dirs = append(dirs, d)
-
+	finuniqnames := make(map[string]struct{})
+	p := &finuniqnames
+	Log.Debug.Printf("ops=OpenDir finuniqnames=\"%v\"\n",finuniqnames)
 	if t[CTrueDir] {
-		dirs,err := v.listDir(name)
+		err := v.listDirUniqueNames(name, p)
 		if err != nil && !t[CFile] {
 			Log.Error.Print(err)
 			return nil, fuse.EIO
 		}
-		findirs = append(findirs, *dirs...)
-		Log.Debug.Printf("op=OpenDir name=\"%v%v\" dirs=\"%v\" err=\"%v\"\n",MTDATA,name,dirs,err)
 	}
+	Log.Debug.Printf("ops=OpenDir finuniqnames=\"%v\"\n",finuniqnames)
 	if t[CFile] {
-		dirs,err := v.listFile(name)
+		err := v.listFileUniqueNames(name, p)
 		if err != nil && !t[CTrueDir] {
 			Log.Error.Print(err)
 			return nil, fuse.EIO
 		}
-		findirs = append(findirs, *dirs...)
-		Log.Debug.Printf("op=OpenDir ctype=CFile secretType=\"%T\" secret=\"%v\"\n",dirs,dirs)
 	}
+	Log.Debug.Printf("ops=OpenDir finuniqnames=\"%v\"\n",finuniqnames)
 	if t[CValue] {
 		return nil, fuse.ENOTDIR
 	}
-	if len(findirs) > 0 {
+	if len(*p) > 0 {
+		findirs := []fuse.DirEntry{}
+		for k := range *p {
+			d := fuse.DirEntry{
+				Name: k,
+				Mode: fuse.S_IFREG,
+			}
+			findirs = append(findirs,d)
+		}
 		return findirs, fuse.OK
 	}
 	return nil, fuse.ENOENT
@@ -245,9 +248,30 @@ func (v *Vault) readAuthToken(u *user.User) (string, error) {
 
 // listDir lists all entries inside a vault directory type=CTrueDir
 func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
-	Log.Debug.Printf("op=listDir MTDATA=\"%v\" name=\"%v/\"\n",MTDATA,name)
+	s,err := v.listDirNames(name)
+	if err != nil {
+		return nil, errors.New("Got an error in listDirNames")
+	}
+	Log.Debug.Printf("GetAttr name=\"%v\" secret=\"%v\" secret.Data=\"%v\"\n",name,s,s)
+	dirs := []fuse.DirEntry{}
+	Log.Debug.Printf("op=listDir dirs=\"%v\"\n",dirs)
+	for i := 0; i < len(s); i++ {
+		d := fuse.DirEntry{
+			Name:  path.Base(s[i]),
+			Mode: fuse.S_IFREG,
+		}
+		dirs = append(dirs, d)
+		Log.Debug.Printf("op=listDir dirs=\"%v\"\n",dirs)
+	}
+	return &dirs,nil
+}
+
+// listDirNames lists all entries inside a vault directory type=CTrueDir and
+// returns a []string with the names of those directories
+func (v *Vault) listDirNames(name string) ([]string, error) {
+	Log.Debug.Printf("op=listDirNames MTDATA=\"%v\" name=\"%v/\"\n",MTDATA,name)
 	s,err := v.client.Logical().List(MTDATA + name+"/")
-	Log.Debug.Printf("secret=\"%v\"\n",s)
+	Log.Debug.Printf("op=listDirNames secret=\"%v\"\n",s)
 
 	// can't list in vault
 	if err != nil || s == nil {
@@ -258,21 +282,28 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 		return nil, err
 	}
 
-	Log.Debug.Printf("GetAttr name=\"%v\" secret=\"%v\" secret.Data=\"%v\"\n",name,s,s.Data)
-	dirs := []fuse.DirEntry{}
-	// https://github.com/asteris-llc/vaultfs/blob/master/fs/root.go
-	// TODO: add Error Handling
-	Log.Debug.Printf("op=listDir dirs=\"%v\"\n",dirs)
-	for i := 0; i < len(s.Data["keys"].([]interface{})); i++ {
-		d := fuse.DirEntry{
-			Name:  path.Base(s.Data["keys"].([]interface{})[i].(string)),
-			Mode: fuse.S_IFREG,
-		}
-		dirs = append(dirs, d)
-		Log.Debug.Printf("op=listDir dirs=\"%v\"\n",dirs)
+	names := []string{}
+	for _,v := range s.Data["keys"].([]interface{}) {
+		names = append(names, v.(string))
 	}
-	return &dirs,nil
+	return names, nil
 }
+
+func (v *Vault) listDirUniqueNames(name string, un *map[string]struct{}) (error) {
+	if un == nil {
+		return errors.New("nil is not a supported value for un")
+	}
+	names, err := v.listDirNames(name)
+	if err != nil {
+		return errors.New("Got an error in listDirNames")
+	}
+
+	for _,v := range names {
+		(*un)[filepath.Base(v)] = struct{}{}
+	}
+	return nil
+}
+
 
 // listFile lists the contents of a virtual directory in secretsfs
 // (aka a file in vault) type=CFile
@@ -284,22 +315,25 @@ func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 		return nil, err
 	}
 
-	dirs := []fuse.DirEntry{}
-	for k := range data {
-		key := data[k]
+	dirs := v.createFileEntries(data)
+	Log.Debug.Printf("op=listFile dirs=\"%v\"\n",dirs)
+	return dirs,nil
+}
+
+func (v *Vault) createFileEntries(names []string) (dirs *[]fuse.DirEntry) {
+	for _,v := range names {
 		// special treatment for entries containing the substitution character
-		if strings.Contains(key, "/") { // viper.GetString("subst_char")) { // strings.Contains(k,"/") {
-			key = strings.Replace(key, "/", string(viper.GetString("subst_char")[0]), -1)
+		if strings.Contains(v, "/") { // viper.GetString("subst_char")) { // strings.Contains(k,"/") {
+			v = strings.Replace(v, "/", string(viper.GetString("subst_char")[0]), -1)
 		}
 
 		d := fuse.DirEntry{
-			Name: key,
+			Name: v,
 			Mode: fuse.S_IFREG,
 		}
-		dirs = append(dirs, d)
+		*dirs = append(*dirs, d)
 	}
-	Log.Debug.Printf("op=listFile dirs=\"%v\"\n",dirs)
-	return &dirs,nil
+	return dirs
 }
 
 // listFileNames is very similar to listFile, but instead of returning fully
@@ -322,6 +356,21 @@ func (v *Vault) listFileNames(name string) ([]string, error) {
 		filenames = append(filenames, k)
 	}
 	return filenames, nil
+}
+
+func (v *Vault) listFileUniqueNames(name string, un *map[string]struct{}) (error) {
+	if un == nil {
+		return errors.New("nil is not a supported value for un")
+	}
+	names, err := v.listFileNames(name)
+	if err != nil {
+		return errors.New("Got an error in listFileNames")
+	}
+
+	for _,v := range names {
+		(*un)[v] = struct{}{}
+	}
+	return nil
 }
 
 // getType returns type of the requested resource
@@ -358,25 +407,41 @@ func (v *Vault) getType(name string) (*api.Secret, Filetype){
 // here foo is a secret as well as a subdirectory. It should be possible, to
 // get both those types
 func (v *Vault) getTypes(name string) (map[Filetype]*api.Secret, map[Filetype]bool) {
-	Log.Debug.Printf("op=getType name=\"%v\"\n",name)
-	Log.Debug.Printf("op=getType path=%s\n",MTDATA+name+"/")
+	Log.Debug.Printf("op=getTypes name=\"%v\"\n",name)
+	Log.Debug.Printf("op=getTypes path=%s\n",MTDATA+name+"/")
 
 	r := make(map[Filetype]bool)
 	rs := make(map[Filetype]*api.Secret)
 
 	s,err := v.client.Logical().List(MTDATA + name + "/")
-	Log.Debug.Printf("op=getType s=\"%v\" err=\"%v\"\n",s,err)
+	Log.Debug.Printf("op=getTypes s=\"%v\" err=\"%v\"\n",s,err)
 	r[CTrueDir] = err == nil && s != nil
 	rs[CTrueDir] = s
 
 	s,err = v.client.Logical().Read(DTDATA + name)
+	Log.Debug.Printf("op=getTypes s=\"%v\" err=\"%v\"\n",s,err)
 	r[CFile] = err == nil && s != nil
 	rs[CFile] = s
 
-	name = path.Dir(name) // clip last element
-	s,err = v.client.Logical().Read(DTDATA + name)
-	r[CValue] = err == nil && s != nil
-	rs[CValue] = s
+	// if else statement here is needed, case of:
+	//   E1							->  secret
+	//   E1/mysecret = 42
+	//   E1/						->  subdir in Vault
+	//   E1/subsecret		-> secret
+	//   E1/subsecret/mysecret = 43
+	// this would have thrown an error, because for E1/subsecret/mysecret it would
+	// have r[CFile] == true AND r[CValue] == true
+	// this would cause errors in any further calculations
+	if !r[CFile] {
+		name = path.Dir(name) // clip last element
+		s,err = v.client.Logical().Read(DTDATA + name)
+		Log.Debug.Printf("op=getTypes s=\"%v\" err=\"%v\"\n",s,err)
+		r[CValue] = err == nil && s != nil
+		rs[CValue] = s
+	} else {
+		r[CValue] = false
+		rs[CValue] = nil
+	}
 
 	return rs,r
 }
