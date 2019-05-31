@@ -1,0 +1,16 @@
+# https://goreleaser.com/ci/
+language: go
+
+go:
+  - "1.12.x"
+
+services:
+  - docker
+
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: curl -sL https://git.io/goreleaser | bash
+    on:
+      tags: true
+      condition: $TRAVIS_OS_NAME = linux
