@@ -1,5 +1,5 @@
 GO15VENDOREXPERIMENT=1
-GO111MODULE=""
+GO111MODULE="off"
 
 all: clean build
 
