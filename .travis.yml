@@ -4,6 +4,10 @@ language: go
 go:
   - "1.12.x"
 
+env:
+  global:
+    - DOCKER_IMAGE=alectolytic/rpmbuilder
+
 services:
   - docker
 
