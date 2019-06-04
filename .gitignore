@@ -17,6 +17,7 @@ sourceit
 *.swp
 secretsfs
 dist/
+site/
 
 # custom go thingies
 go.sum
