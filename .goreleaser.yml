@@ -50,7 +50,7 @@ nfpms:
       "examples/secretsfs-rsyslog.conf": "/etc/rsyslog.d/secretsfs.conf"
     empty_folders:
       - /etc/secretsfs
-      - /etc/secretsfs/templatefiles
+      - /etc/secretsfs/templates
     overrides:
       rpm:
         replacements:
