@@ -33,3 +33,21 @@ changelog:
     exclude:
     - '^docs:'
     - '^test:'
+nfpms:
+  - id: secretsfs
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    vendor: https://github.com/muryoutaisuu
+    homepage: https://github.com/muryoutaisuu/secretsfs
+    license: New BSD License
+    maintainer: https://github.com/muryoutaisuu
+    description: Access your secrets like passwords without a client directly from your filesystem with a simple cat call!
+    formats:
+      - rpm
+    empty_folders:
+      - /etc/secretsfs
+      - /etc/secretsfs/templatefiles
+    overrides:
+      rpm:
+        replacements:
+          amd64: "x86_64"
+        name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
