@@ -4,12 +4,10 @@ language: go
 go:
   - "1.12.x"
 
-env:
-  global:
-    - DOCKER_IMAGE=rpmbuild/centos7
-
-services:
-  - docker
+addons:
+  apt:
+    packages:
+    - rpm
 
 deploy:
   - provider: script
