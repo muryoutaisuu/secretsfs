@@ -23,6 +23,7 @@ archives:
   files:
     - 'README.md'
     - 'example/*'
+    - 'docs/*'
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -43,6 +44,10 @@ nfpms:
     description: Access your secrets like passwords without a client directly from your filesystem with a simple cat call!
     formats:
       - rpm
+    files:
+      "examples/secretsfs-logrotate.conf": "/etc/logrotate.d/secretsfs"
+      "examples/secretsfs.service": "/etc/systemd/system/secretsfs.service"
+      "examples/secretsfs-rsyslog.conf": "/etc/rsyslog.d/secretsfs.conf"
     empty_folders:
       - /etc/secretsfs
       - /etc/secretsfs/templatefiles
