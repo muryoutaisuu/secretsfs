@@ -6,7 +6,7 @@ go:
 
 env:
   global:
-    - DOCKER_IMAGE=alectolytic/rpmbuilder
+    - DOCKER_IMAGE=rpmbuild/centos7
 
 services:
   - docker
