@@ -30,7 +30,7 @@ var sto store.Store
 // If FIO is enabled due to configuration, also enable it.
 // If not, only register it in Disabled state
 func RegisterProvider(fm *FIOMap) {
-	fios := viper.GetStringSlice("ENABLED_FIOS")
+	fios := viper.GetStringSlice("fio.enabled")
 	for _,f := range fios {
 		if f == fm.Provider.FIOPath() {
 			fm.Enabled = true

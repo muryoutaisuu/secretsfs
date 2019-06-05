@@ -24,7 +24,7 @@ func GetStore() Store {
 // if a store is also set to be the backend store it will be set here
 func RegisterStore(s Store) {
 	stores = append(stores, s.String())
-	if viper.GetString("CURRENT_STORE") == s.String() {
+	if viper.GetString("store.enabled") == s.String() {
 		store = s
 	}
 }

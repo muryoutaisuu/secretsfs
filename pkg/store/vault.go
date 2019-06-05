@@ -45,7 +45,7 @@ type Vault struct {
 
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	Log.Debug.Printf("ops=GetAttr name=\"%v\"\n",name)
-	Log.Debug.Printf("ops=GetAttr MTDATA=%s\n",viper.GetString("MTDATA"))
+	Log.Debug.Printf("ops=GetAttr MTDATA=%s\n",viper.GetString("store.vault.mtdata"))
 	Log.Debug.Printf("ops=GetAttr Token=%s\n",v.client.Token())
 
 	// opening directory (aka secretsfiles/)
@@ -173,7 +173,7 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 }
 
 func (v *Vault) String() (string) {
-	return "Vault"
+	return "vault"
 }
 
 
@@ -323,8 +323,8 @@ func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
 func (v *Vault) createFileEntries(names []string) (dirs *[]fuse.DirEntry) {
 	for _,v := range names {
 		// special treatment for entries containing the substitution character
-		if strings.Contains(v, "/") { // viper.GetString("subst_char")) { // strings.Contains(k,"/") {
-			v = strings.Replace(v, "/", string(viper.GetString("subst_char")[0]), -1)
+		if strings.Contains(v, "/") { // viper.GetString("general.substchar")) { // strings.Contains(k,"/") {
+			v = strings.Replace(v, "/", string(viper.GetString("general.substchar")[0]), -1)
 		}
 
 		d := fuse.DirEntry{
@@ -467,7 +467,7 @@ func (v *Vault) getCorrectName(pathname string, nameonly bool) (string, bool, er
 	}
 
 	// check whether name contains any characters, that may be substituted
-	if !strings.Contains(value, viper.GetString("subst_char")) {
+	if !strings.Contains(value, viper.GetString("general.substchar")) {
 		Log.Debug.Printf("op=getCorrectName msg=\"contains no characters that may be substituted\" variable=value value=\"%v\"\n",value)
 		return value, false, nil
 	}
@@ -480,7 +480,7 @@ func (v *Vault) getCorrectName(pathname string, nameonly bool) (string, bool, er
 	}
 	Log.Debug.Printf("op=getCorrectName msg=\"got actual contents of vault secret\" variable=filenames value=\"%v\"\n",filenames)
 
-	possibilities := sfshelpers.SubstitutionPossibilities(value, viper.GetString("subst_char"), "/")
+	possibilities := sfshelpers.SubstitutionPossibilities(value, viper.GetString("general.substchar"), "/")
 	Log.Debug.Printf("op=getCorrectName msg=\"got all possible key names\" variable=possibilities value=\"%v\"\n",possibilities)
 	for _,f := range filenames {
 		for _,p := range possibilities {
@@ -500,9 +500,9 @@ func (v *Vault) getCorrectName(pathname string, nameonly bool) (string, bool, er
 // This means that $HOME will be resolved to the users home directory, and that
 // the users alias is applied
 func finIdPath(u *user.User) (string) {
-	path := strings.Replace(viper.GetString("FILE_ROLEID"), "$HOME", u.HomeDir, 1)
+	path := strings.Replace(viper.GetString("store.vault.roleid.file"), "$HOME", u.HomeDir, 1)
 
-	specialusers := viper.GetStringMapString("FILE_ROLEID_USER")
+	specialusers := viper.GetStringMapString("store.vault.roleid.useroverride")
 	if val, ok := specialusers[u.Name]; ok {
 		// replace $HOME also, if path was set user specific
 		path = strings.Replace(val, "$HOME", u.HomeDir, 1)
@@ -512,12 +512,12 @@ func finIdPath(u *user.User) (string) {
 
 func configureTLS(c *api.Config) error {
 	tls := api.TLSConfig{}
-	if viper.IsSet("HTTPS_CACERT") { tls.CACert = viper.GetString("HTTPS_CACERT") }
-	if viper.IsSet("HTTPS_CAPATH") { tls.CAPath = viper.GetString("HTTPS_CAPATH") }
-	if viper.IsSet("HTTPS_CLIENTCERT") { tls.ClientCert = viper.GetString("HTTPS_CLIENTCERT") }
-	if viper.IsSet("HTTPS_CLIENTKEY") { tls.ClientKey = viper.GetString("HTTPS_CLIENTKEY") }
-	if viper.IsSet("HTTPS_TLSSERVERNAME") { tls.TLSServerName = viper.GetString("HTTPS_TLSSERVERNAME") }
-	if viper.IsSet("HTTPS_INSECURE") { tls.Insecure = viper.GetBool("HTTPS_INSECURE") }
+	if viper.IsSet("tls.cacert") { tls.CACert = viper.GetString("tls.cacert") }
+	if viper.IsSet("tls.capath") { tls.CAPath = viper.GetString("tls.capath") }
+	if viper.IsSet("tls.clientcert") { tls.ClientCert = viper.GetString("tls.clientcert") }
+	if viper.IsSet("tls.clientkey") { tls.ClientKey = viper.GetString("tls.clientkey") }
+	if viper.IsSet("tls.tlsservername") { tls.TLSServerName = viper.GetString("tls.tlsservername") }
+	if viper.IsSet("tls.insecure") { tls.Insecure = viper.GetBool("tls.insecure") }
 	Log.Debug.Printf("op=init tls=%v\n",tls)
 	err :=  c.ConfigureTLS(&tls)
 	if c.Error != nil { return c.Error }
@@ -525,7 +525,7 @@ func configureTLS(c *api.Config) error {
 }
 
 func init() {
-	a := viper.GetString("VAULT_ADDR")
+	a := viper.GetString("store.vault.addr")
 	// create first config type
 	conf := api.DefaultConfig()
 	conf.Address = a
@@ -551,10 +551,10 @@ func init() {
 	}
 	v.client.ClearToken()
 	RegisterStore(&v) //https://stackoverflow.com/questions/40823315/x-does-not-implement-y-method-has-a-pointer-receiver
-	if viper.GetString("CURRENT_STORE") == v.String() {
-		Log.Debug.Printf("op=init MTDATA=%s\n",viper.GetString("MTDATA"))
-		MTDATA = viper.GetString("MTDATA")
-		DTDATA = viper.GetString("DTDATA")
+	if viper.GetString("store.enabled") == v.String() {
+		Log.Debug.Printf("op=init MTDATA=%s\n",viper.GetString("store.vault.mtdata"))
+		MTDATA = viper.GetString("store.vault.mtdata")
+		DTDATA = viper.GetString("store.vault.dtdata")
 	}
 }
 

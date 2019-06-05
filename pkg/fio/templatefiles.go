@@ -46,7 +46,7 @@ func (t *FIOTemplatefiles) GetAttr(name string, context *fuse.Context) (*fuse.At
 	}
 
 	// get path to templates
-	filepath := getCorrectPath(name)
+	filepath := t.getCorrectPath(name)
 
 	// check whether filepath exists
 	file, err := os.Stat(filepath)
@@ -76,7 +76,7 @@ func (t *FIOTemplatefiles) OpenDir(name string, context *fuse.Context) ([]fuse.D
 	Log.Debug.Printf("ops=OpenDir name=\"%v\"\n",name)
 
 	// get filepath to templates
-	filepath := getCorrectPath(name)
+	filepath := t.getCorrectPath(name)
 
 	// check whether filepath exists
 	file, err := os.Stat(filepath)
@@ -111,7 +111,7 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 	Log.Debug.Printf("ops=Open name=\"%v\"\n",name)
 
 	// get filepath to templates
-	filepath := getCorrectPath(name)
+	filepath := t.getCorrectPath(name)
 
 	// check whether filepath exists
 	file, err := os.Stat(filepath)
@@ -167,10 +167,11 @@ func (t *FIOTemplatefiles) FIOPath() string {
 
 // getCorrectPath returns the corrected Path for reading the file from local
 // filesytem
-func getCorrectPath(name string) string {
-	filepath := viper.GetString("PATH_TO_TEMPLATES")+name
-	Log.Debug.Printf("op=getCorrectPath variable=filepath value=\"%s\"\n",filepath)
-	return filepath
+func (t *FIOTemplatefiles) getCorrectPath(name string) string {
+	return t.templpath + name
+	//filepath := viper.GetString("fio.templatefiles.templatespath")+name
+	//Log.Debug.Printf("op=getCorrectPath variable=filepath value=\"%s\"\n",filepath)
+	//return filepath
 }
 
 
@@ -192,7 +193,7 @@ func (s secret) Get(filepath string) (string, error) {
 
 func init() {
 	fioprov := FIOTemplatefiles{
-		templpath: viper.GetString("PATH_TO_TEMPLATES"),
+		templpath: viper.GetString("fio.templatefiles.templatespath"),
 	}
 	fm := FIOMap{
 		Provider: &fioprov,
