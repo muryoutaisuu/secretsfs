@@ -5,19 +5,22 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
+	"github.com/spf13/viper"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/muryoutaisuu/secretsfs/cmd/secretsfs/config"
 	"github.com/muryoutaisuu/secretsfs/pkg/fio"
 	"github.com/muryoutaisuu/secretsfs/pkg/store"
 	"github.com/muryoutaisuu/secretsfs/pkg/secretsfs"
 )
+
+var logger = log.NewEntry(log.StandardLogger())
 
 func main() {
 	// ARGUMENT THINGIES START
@@ -28,23 +31,24 @@ func main() {
 	var defaults = flag.Bool("print-defaults", false, "prints default configurations")
 	var stores = flag.Bool("print-stores", false, "prints available stores")
 	var fios = flag.Bool("print-fios", false, "prints available FIOs")
+	var json = flag.Bool("log-json", false, "log in json format")
 
 	firstdashed := firstDashedArg(os.Args)
 	flag.CommandLine.Parse(os.Args[firstdashed:])
 
-	// print default configs, -print-defaults
+	// print default configs, --print-defaults
 	if *defaults {
-		fmt.Printf("Default Configs: \n%s",config.GetStringConfigDefaults())
+		fmt.Printf(config.GetStringConfigDefaults())
 		os.Exit(0)
 	}
 
-	// print available stores, -print-stores
+	// print available stores, --print-stores
 	if *stores {
 		fmt.Printf("Available Stores are: %v\n", store.GetStores())
 		os.Exit(0)
 	}
 
-	// prints available fios, -print-fios
+	// prints available fios, --print-fios
 	if *fios {
 		maps := fio.FIOMaps()
 		list := make([]string, 0)
@@ -61,14 +65,31 @@ func main() {
 		os.Exit(0)
 	}
 
-	log.Printf("Call is: %s\n",os.Args)
+	// setup logging
+	log.SetOutput(os.Stdout)
+	if *json {
+		log.SetFormatter(&log.JSONFormatter{})
+	} else {
+		log.SetFormatter(&log.TextFormatter{FullTimestamp: true, DisableColors: true})
+	}
+	log.SetReportCaller(true)
+	l, err := log.ParseLevel(viper.GetString("general.logging.level"))
+	if err != nil {
+		log.Error("Could not parse logging Level configuration! Will fallback to info level")
+		log.SetLevel(log.InfoLevel)
+	} else {
+		log.SetLevel(l)
+	}
+
 	// print usage if no arguments were provided
+	// os.Args[0] is the programname itself
 	if len(os.Args) < 2 {
 		usage()
 		os.Exit(2)
 	}
+	logger.Info("log values")
 	mountpoint := os.Args[1]
-	log.Println("mountpoint is: "+mountpoint)
+	logger.WithFields(log.Fields{"mountpoint":mountpoint}).Info("log values")
 	// ARGUMENT THINGIES END
 
 	// create the filesystem object
@@ -82,13 +103,13 @@ func main() {
 
 	// set options
 	fsopts := fuse.MountOptions{}
-	log.Println(*opts)
+	log.Debug(*opts)
 	fsopts.Options = strings.Split(*opts, ",")
 
 	// create server
 	server, err := fuse.NewServer(fsc.RawFS(), mountpoint, &fsopts)
 	if err != nil {
-		log.Printf("Mountfail: %v\n", err)
+		log.Fatal("Mountfail: %v\n", err)
 		os.Exit(1)
 	}
 	// mount and now serve me till the end!!!

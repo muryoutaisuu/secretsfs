@@ -6,24 +6,24 @@
 // The FIOMap makes sure that mountpath in the high-top filesystem and FIO plugin
 // are always mapped correctly.
 // 
-// Also initializes variable Log for shared (and consistent) Logging.
+// Also initializes variable logging for shared (and consistent) Logging.
 package fio
 
 import(
-	"github.com/muryoutaisuu/secretsfs/pkg/sfslog"
-	"github.com/muryoutaisuu/secretsfs/pkg/store"
-
 	"github.com/spf13/viper"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/muryoutaisuu/secretsfs/pkg/store"
 )
 
 // fiomaps contains all FIOMaps, that map FIOProvider to MountPaths
 var fiomaps map[string]*FIOMap = make(map[string]*FIOMap) // oder map[string]FIOMap
 
-// Log contains all the needed Loggers
-var Log *sfslog.Log = sfslog.Logger()
-
 // sto contains the currently set store
 var sto store.Store
+
+// logging
+var logger = log.NewEntry(log.StandardLogger())
 
 // RegisterProvider registers FIOMaps.
 // To be used inside of init() Function of Plugins.

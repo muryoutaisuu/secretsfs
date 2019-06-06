@@ -24,6 +24,10 @@ general:
       #- $HOME/.secretsfs
     #configfile: secretsfs  # without file type
 
+  # logging levels may be: {debug,info,warn,error}
+  logging:
+    level: info
+
   # fuse does not allow the character '/' inside of names of directories or files
   # in vault k=v pairs of one secret will be shown as files, where k is the name
   # of the file and v the value. k may also include names with a '/'.

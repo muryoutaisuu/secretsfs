@@ -11,10 +11,13 @@ import (
 	"errors"
 
 	"github.com/muryoutaisuu/secretsfs/pkg/store"
+	sfsh "github.com/muryoutaisuu/secretsfs/pkg/sfshelpers"
+	sfsl "github.com/muryoutaisuu/secretsfs/pkg/sfslog"
 
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/spf13/viper"
+	log "github.com/sirupsen/logrus"
 )
 
 // FIOTemplatefiles is a Filesystem implementing the FIOPlugin interface that
@@ -36,7 +39,12 @@ type secret struct {
 }
 
 func (t *FIOTemplatefiles) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
-	Log.Debug.Printf("ops=GetAttr name=\"%v\"\n",name)
+	u,err := sfsh.GetUser(context)
+	if err != nil {
+		return nil, fuse.EPERM
+	}
+	logger = sfsl.DefaultEntry(name, u)
+	logger.Debug("calling operation")
 	
 	// opening directory (aka templatefiles/)
 	if name == "" {
@@ -51,7 +59,7 @@ func (t *FIOTemplatefiles) GetAttr(name string, context *fuse.Context) (*fuse.At
 	// check whether filepath exists
 	file, err := os.Stat(filepath)
 	if err != nil {
-		Log.Error.Println(err)
+		logger.Error(err)
 		return nil, fuse.ENOENT
 	}
 
@@ -73,7 +81,13 @@ func (t *FIOTemplatefiles) GetAttr(name string, context *fuse.Context) (*fuse.At
 }
 
 func (t *FIOTemplatefiles) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
-	Log.Debug.Printf("ops=OpenDir name=\"%v\"\n",name)
+	u,err := sfsh.GetUser(context)
+	if err != nil {
+		return nil, fuse.EPERM
+	}
+	logger = sfsl.DefaultEntry(name, u)
+	logger.Debug("calling operation")
+
 
 	// get filepath to templates
 	filepath := t.getCorrectPath(name)
@@ -81,19 +95,19 @@ func (t *FIOTemplatefiles) OpenDir(name string, context *fuse.Context) ([]fuse.D
 	// check whether filepath exists
 	file, err := os.Stat(filepath)
 	if err != nil {
-		Log.Error.Println(err)
+		logger.Error(err)
 		return nil, fuse.ENOENT
 	}
 	// check whether filepath is a directory
 	// https://stackoverflow.com/questions/8824571/golang-determining-whether-file-points-to-file-or-directory
 	if !file.Mode().IsDir() {
-		Log.Error.Printf("op=OpenDir msg=\"not a directory\" filepath=\"%s\"\n",filepath)
+		logger.WithFields(log.Fields{"filepath":filepath}).Error("not a directory")
 		return nil, fuse.ENOTDIR
 	}
 
 	entries,err := ioutil.ReadDir(filepath)
 	if err != nil {
-		Log.Error.Print(err)
+		logger.Error(err)
 		return nil, fuse.EBUSY
 	}
 	dirs := []fuse.DirEntry{}
@@ -108,7 +122,12 @@ func (t *FIOTemplatefiles) OpenDir(name string, context *fuse.Context) ([]fuse.D
 }
 
 func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
-	Log.Debug.Printf("ops=Open name=\"%v\"\n",name)
+	u,err := sfsh.GetUser(context)
+	if err != nil {
+		return nil, fuse.EPERM
+	}
+	logger = sfsl.DefaultEntry(name, u)
+	logger.Debug("calling operation")
 
 	// get filepath to templates
 	filepath := t.getCorrectPath(name)
@@ -116,14 +135,14 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 	// check whether filepath exists
 	file, err := os.Stat(filepath)
 	if err != nil {
-		Log.Error.Println(err)
+		logger.Error(err)
 		return nil, fuse.ENOENT
 	}
 
 	// check whether filepath is a file
 	// https://stackoverflow.com/questions/8824571/golang-determining-whether-file-points-to-file-or-directory
 	if !file.Mode().IsRegular() {
-		Log.Error.Printf("op=Open msg=\"not a directory\" filepath=\"%s\"\n",filepath)
+		logger.WithFields(log.Fields{"filepath":filepath}).Error("not a directory")
 		return nil, fuse.EISDIR
 	}
 
@@ -132,7 +151,7 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 	// error handling
 	if err != nil {
 		errs := err.Error()
-		Log.Error.Println(errs)
+		logger.Error(errs)
 		return nil, fuse.EREMOTEIO
 	}
 
@@ -149,7 +168,7 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 
 	err = parser.Execute(&buf, secret)
 	if err != nil {
-		Log.Error.Println(err)
+		logger.Error(err)
 		switch {
 		case strings.Contains(err.Error(), fmt.Sprint(fuse.EACCES)):
 			return nil, fuse.EACCES
@@ -170,7 +189,7 @@ func (t *FIOTemplatefiles) FIOPath() string {
 func (t *FIOTemplatefiles) getCorrectPath(name string) string {
 	return t.templpath + name
 	//filepath := viper.GetString("fio.templatefiles.templatespath")+name
-	//Log.Debug.Printf("op=getCorrectPath variable=filepath value=\"%s\"\n",filepath)
+	//logger.WithFields(log.Fields{"filepath":filepath}).Debug("log values")
 	//return filepath
 }
 
@@ -182,7 +201,7 @@ func (s secret) Get(filepath string) (string, error) {
 	sto := store.GetStore()
   content, status := sto.Open(filepath, s.flags, s.context)
 	if status != fuse.OK {
-		Log.Error.Printf("op=Get msg=\"There was an error while loading secret from store\" fuse.Status=\"%s\"\n",status)
+		logger.WithFields(log.Fields{"fuse.Status":status}).Error("encountered error while loading secret from store")
 		//return "", errors.New("There was an error while loading Secret from store, fuse.Status="+fmt.Sprint(status))
 		return "", errors.New(fmt.Sprint(status))
 	}
