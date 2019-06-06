@@ -75,9 +75,11 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 	logger.Info("calling operation")
 
 	if root == "" && subpath == "" {
+		logger.Info("successfully delivered attributes")
 		return &fuse.Attr{Mode: fuse.S_IFDIR | 0755,}, fuse.OK
 	}
 	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
+		logger.Info("successfully delivered attributes")
 		return sfs.fms[root].Provider.GetAttr(subpath, context)
 	}
 	return &fuse.Attr{}, fuse.ENOENT
@@ -97,9 +99,11 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 		for k := range sfs.fms {
 			c = append(c, fuse.DirEntry{Name: k, Mode: fuse.S_IFDIR})
 		}
+		logger.Info("successfully listed directory")
 		return c, fuse.OK
 	}
 	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
+		logger.Info("successfully listed directory")
 		return sfs.fms[root].Provider.OpenDir(subpath, context)
 	}
 	return nil, fuse.ENOENT
@@ -118,6 +122,7 @@ func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (fi
 		return nil, fuse.EINVAL
 	}
 	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
+		logger.Info("successfully delivered file")
 		return sfs.fms[root].Provider.Open(subpath, flags, context)
 	}
 	return nil, fuse.EPERM
