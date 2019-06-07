@@ -13,6 +13,7 @@ func TestSubstitutionPossibilities(t *testing.T) {
 		{"a_b_c_d", "_", "/", []string {"a_b_c_d", "a_b_c/d", "a_b/c_d", "a_b/c/d", "a/b_c_d", "a/b_c/d", "a/b/c_d", "a/b/c/d"}},
 		{"_c", "_", "/", []string {"_c", "/c"}},
 		{"_c_", "_", "/", []string {"_c_", "_c/", "/c_", "/c/"}},
+		{"", "_", "/", []string{}},
 	}
 
 	for _, table := range tables {

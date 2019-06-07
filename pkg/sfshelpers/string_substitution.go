@@ -16,6 +16,9 @@ package sfshelpers
 //	variants: [a_b_c_d a_b_c/d a_b/c_d a_b/c/d a/b_c_d a/b_c/d a/b/c_d a/b/c/d]
 func SubstitutionPossibilities(s, b, n string) []string {
 	l := len(s)
+	if l == 0 {
+		return []string{}
+	}
 	var mys []string
 
 	if l > 1 {
