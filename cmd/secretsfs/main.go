@@ -75,7 +75,7 @@ func main() {
 	log.SetReportCaller(true)
 	l, err := log.ParseLevel(viper.GetString("general.logging.level"))
 	if err != nil {
-		log.Error("Could not parse logging Level configuration! Will fallback to info level")
+		logger.Error("Could not parse logging Level configuration! Will fallback to info level")
 		log.SetLevel(log.InfoLevel)
 	} else {
 		log.SetLevel(l)
@@ -95,7 +95,7 @@ func main() {
 	// create the filesystem object
 	sfs,err := secretsfs.NewSecretsFS(pathfs.NewDefaultFileSystem(), fio.FIOMaps(), store.GetStore())
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	pathnfs := pathfs.NewPathNodeFs(sfs, nil)
 
@@ -103,13 +103,13 @@ func main() {
 
 	// set options
 	fsopts := fuse.MountOptions{}
-	log.Debug(*opts)
+	logger.Debug(*opts)
 	fsopts.Options = strings.Split(*opts, ",")
 
 	// create server
 	server, err := fuse.NewServer(fsc.RawFS(), mountpoint, &fsopts)
 	if err != nil {
-		log.Fatal("Mountfail: %v\n", err)
+		logger.Fatalf("Mountfail: %v\n", err)
 		os.Exit(1)
 	}
 	// mount and now serve me till the end!!!
