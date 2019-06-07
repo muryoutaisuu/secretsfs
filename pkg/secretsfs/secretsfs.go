@@ -25,19 +25,20 @@ import (
 	"strings"
 	"path/filepath"
 	"os/user"
-	"strconv"
 
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/muryoutaisuu/secretsfs/pkg/fio"
 	"github.com/muryoutaisuu/secretsfs/pkg/store"
 	"github.com/muryoutaisuu/secretsfs/pkg/sfslog"
+	sfsh "github.com/muryoutaisuu/secretsfs/pkg/sfshelpers"
 )
 
-// Log is used for shared logging properties
-var Log *sfslog.Log = sfslog.Logger()
+// logging
+var logger = log.NewEntry(log.StandardLogger())
 
 // SecretsFS is the high-top filesystem.
 // It contains references to FIOMap (mapping mountpath to a plugin) and the
@@ -66,17 +67,19 @@ func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap, s store.Stor
 
 func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	root, subpath := rootName(name)
-	Log.Debug.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n",name,root,subpath)
-	u,e := getUser(context)
-	if e != nil {
+	u,err := sfsh.GetUser(context)
+	if err != nil {
 		return nil, fuse.EPERM
 	}
-	Log.Info.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n userid=\"%v\" username=\"%v\"",name,root,subpath,u.Uid,u.Username)
+	logger = defaultEntry(name, u, root, subpath)
+	logger.Info("calling operation")
 
 	if root == "" && subpath == "" {
+		logger.Info("successfully delivered attributes")
 		return &fuse.Attr{Mode: fuse.S_IFDIR | 0755,}, fuse.OK
 	}
 	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
+		logger.Info("successfully delivered attributes")
 		return sfs.fms[root].Provider.GetAttr(subpath, context)
 	}
 	return &fuse.Attr{}, fuse.ENOENT
@@ -84,21 +87,23 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
 	root, subpath := rootName(name)
-	Log.Debug.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n",name,root,subpath)
-	u,e := getUser(context)
-	if e != nil {
+	u,err := sfsh.GetUser(context)
+	if err != nil {
 		return nil, fuse.EPERM
 	}
-	Log.Info.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n userid=\"%v\" username=\"%v\"",name,root,subpath,u.Uid,u.Username)
+	logger = defaultEntry(name, u, root, subpath)
+	logger.Info("calling operation")
 
 	if name == "" {
 		c = []fuse.DirEntry{}
 		for k := range sfs.fms {
 			c = append(c, fuse.DirEntry{Name: k, Mode: fuse.S_IFDIR})
 		}
+		logger.Info("successfully listed directory")
 		return c, fuse.OK
 	}
 	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
+		logger.Info("successfully listed directory")
 		return sfs.fms[root].Provider.OpenDir(subpath, context)
 	}
 	return nil, fuse.ENOENT
@@ -106,21 +111,31 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 
 func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
 	root, subpath := rootName(name)
-	Log.Debug.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n",name,root,subpath)
-	u,e := getUser(context)
-	if e != nil {
+	u,err := sfsh.GetUser(context)
+	if err != nil {
 		return nil, fuse.EPERM
 	}
-	Log.Info.Printf("ops=GetAttr name=\"%v\" root=\"%v\" subpath=\"%v\"\n userid=\"%v\" username=\"%v\"",name,root,subpath,u.Uid,u.Username)
+	logger = defaultEntry(name, u, root, subpath)
+	logger.Info("calling operation")
 
 	if name == "" {
 		return nil, fuse.EINVAL
 	}
 	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
+		logger.Info("successfully delivered file")
 		return sfs.fms[root].Provider.Open(subpath, flags, context)
 	}
 	return nil, fuse.EPERM
 }
+
+
+func defaultEntry(name string, user *user.User, root, subpath string) *log.Entry {
+	return sfslog.DefaultEntry(name, user).WithFields(log.Fields{
+    "root": root,
+    "subpath": subpath,
+  })
+}
+
 
 
 // rootName calculates, which FIO the call came from and what the subpath for
@@ -130,11 +145,4 @@ func rootName(path string) (root, subpath string) {
   root = list[0]
   subpath = filepath.Join(list[1:]...)
   return
-}
-
-
-// getUser returns user element
-// used for getting userinfo for logging
-func getUser(context *fuse.Context) (*user.User, error) {
-	return user.LookupId(strconv.Itoa(int(context.Owner.Uid)))
 }
