@@ -45,9 +45,9 @@ nfpms:
     formats:
       - rpm
     files:
-      "examples/secretsfs-logrotate.conf": "/etc/logrotate.d/secretsfs"
-      "examples/secretsfs.service": "/etc/systemd/system/secretsfs.service"
-      "examples/secretsfs-rsyslog.conf": "/etc/rsyslog.d/secretsfs.conf"
+      "example/secretsfs-logrotate.conf": "/etc/logrotate.d/secretsfs"
+      "example/secretsfs.service": "/etc/systemd/system/secretsfs.service"
+      "example/secretsfs-rsyslog.conf": "/etc/rsyslog.d/secretsfs.conf"
     empty_folders:
       - /etc/secretsfs
       - /etc/secretsfs/templates
