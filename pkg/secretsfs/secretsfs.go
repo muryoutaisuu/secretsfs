@@ -66,9 +66,11 @@ func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap, s store.Stor
 }
 
 func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
+	logger.WithFields(log.Fields{"name":name, "context":context}).Info("log values")
 	root, subpath := rootName(name)
 	u,err := sfsh.GetUser(context)
 	if err != nil {
+		logger.WithFields(log.Fields{"name":name, "context":context, "error":err}).Info("got error while getting user information")
 		return nil, fuse.EPERM
 	}
 	logger = defaultEntry(name, u, root, subpath)
@@ -82,13 +84,16 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 		logger.Info("successfully delivered attributes")
 		return sfs.fms[root].Provider.GetAttr(subpath, context)
 	}
+	logger.WithFields(log.Fields{"name":name, "context":context}).Info("no element found")
 	return &fuse.Attr{}, fuse.ENOENT
 }
 
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
+	logger.WithFields(log.Fields{"name":name, "context":context}).Info("log values")
 	root, subpath := rootName(name)
 	u,err := sfsh.GetUser(context)
 	if err != nil {
+		logger.WithFields(log.Fields{"name":name, "context":context, "error":err}).Info("got error while getting user information")
 		return nil, fuse.EPERM
 	}
 	logger = defaultEntry(name, u, root, subpath)
@@ -106,25 +111,30 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 		logger.Info("successfully listed directory")
 		return sfs.fms[root].Provider.OpenDir(subpath, context)
 	}
+	logger.WithFields(log.Fields{"name":name, "context":context}).Info("no element found")
 	return nil, fuse.ENOENT
 }
 
 func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
+	logger.WithFields(log.Fields{"name":name, "context":context}).Info("log values")
 	root, subpath := rootName(name)
 	u,err := sfsh.GetUser(context)
 	if err != nil {
+		logger.WithFields(log.Fields{"name":name, "context":context, "error":err}).Info("got error while getting user information")
 		return nil, fuse.EPERM
 	}
 	logger = defaultEntry(name, u, root, subpath)
 	logger.Info("calling operation")
 
 	if name == "" {
+		logger.WithFields(log.Fields{"name":name, "context":context}).Info("no element found")
 		return nil, fuse.EINVAL
 	}
 	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
 		logger.Info("successfully delivered file")
 		return sfs.fms[root].Provider.Open(subpath, flags, context)
 	}
+	logger.WithFields(log.Fields{"name":name, "context":context}).Info("no element found")
 	return nil, fuse.EPERM
 }
 
