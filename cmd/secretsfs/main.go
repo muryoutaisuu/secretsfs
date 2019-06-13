@@ -1,4 +1,4 @@
-// SecretsFS - Access Your Secrets Comfortably and Safely 
+// SecretsFS - Access Your Secrets Comfortably and Safely
 
 package main
 
@@ -11,13 +11,13 @@ import (
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
 	"github.com/hanwen/go-fuse/fuse/pathfs"
-	"github.com/spf13/viper"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/muryoutaisuu/secretsfs/cmd/secretsfs/config"
 	"github.com/muryoutaisuu/secretsfs/pkg/fio"
-	"github.com/muryoutaisuu/secretsfs/pkg/store"
 	"github.com/muryoutaisuu/secretsfs/pkg/secretsfs"
+	"github.com/muryoutaisuu/secretsfs/pkg/store"
 )
 
 var logger = log.NewEntry(log.StandardLogger())
@@ -26,7 +26,7 @@ func main() {
 	// ARGUMENT THINGIES START
 	// parse arguments & flags
 	flag.Usage = usage
-	var opts = flag.String("o","","Options passed through to fuse")
+	var opts = flag.String("o", "", "Options passed through to fuse")
 	var currentstore = flag.Bool("print-store", false, "prints currently set store")
 	var defaults = flag.Bool("print-defaults", false, "prints default configurations")
 	var stores = flag.Bool("print-stores", false, "prints available stores")
@@ -89,17 +89,17 @@ func main() {
 	}
 	logger.Info("log values")
 	mountpoint := os.Args[1]
-	logger.WithFields(log.Fields{"mountpoint":mountpoint}).Info("log values")
+	logger.WithFields(log.Fields{"mountpoint": mountpoint}).Info("log values")
 	// ARGUMENT THINGIES END
 
 	// create the filesystem object
-	sfs,err := secretsfs.NewSecretsFS(pathfs.NewDefaultFileSystem(), fio.FIOMaps(), store.GetStore())
+	sfs, err := secretsfs.NewSecretsFS(pathfs.NewDefaultFileSystem(), fio.FIOMaps(), store.GetStore())
 	if err != nil {
 		logger.Fatal(err)
 	}
 	pathnfs := pathfs.NewPathNodeFs(sfs, nil)
 
-	fsc := nodefs.NewFileSystemConnector(pathnfs.Root(), nodefs.NewOptions())  // FileSystemConnector
+	fsc := nodefs.NewFileSystemConnector(pathnfs.Root(), nodefs.NewOptions()) // FileSystemConnector
 
 	// set options
 	fsopts := fuse.MountOptions{}
@@ -128,7 +128,7 @@ func usage() {
 // firstDashedArg returns the index of the first dashed argument, e.g. -ex
 // https://stackoverflow.com/a/51526473/4069534
 func firstDashedArg(args []string) int {
-	for i := 1; i < len(args); i ++ {
+	for i := 1; i < len(args); i++ {
 		if len(args[i]) > 0 && args[i][0] == '-' {
 			return i
 		}

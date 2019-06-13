@@ -1,23 +1,23 @@
 package fio
 
 import (
-	"fmt"
-	"os"
-	"io/ioutil"
-	"text/template"
 	"bytes"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"path"
 	"strings"
-	"errors"
+	"text/template"
 
-	"github.com/muryoutaisuu/secretsfs/pkg/store"
 	sfsh "github.com/muryoutaisuu/secretsfs/pkg/sfshelpers"
 	sfsl "github.com/muryoutaisuu/secretsfs/pkg/sfslog"
+	"github.com/muryoutaisuu/secretsfs/pkg/store"
 
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
-	"github.com/spf13/viper"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 // FIOTemplatefiles is a Filesystem implementing the FIOPlugin interface that
@@ -31,21 +31,21 @@ type FIOTemplatefiles struct {
 }
 
 // secret will be used to call the stores implementation of all the needed FUSE-
-// operations together with the provided flags and fuse.Context. 
+// operations together with the provided flags and fuse.Context.
 type secret struct {
-	flags uint32
+	flags   uint32
 	context *fuse.Context
-	t *FIOTemplatefiles
+	t       *FIOTemplatefiles
 }
 
 func (t *FIOTemplatefiles) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
-	u,err := sfsh.GetUser(context)
+	u, err := sfsh.GetUser(context)
 	if err != nil {
 		return nil, fuse.EPERM
 	}
 	logger = sfsl.DefaultEntry(name, u)
 	logger.Debug("calling operation")
-	
+
 	// opening directory (aka templatefiles/)
 	if name == "" {
 		return &fuse.Attr{
@@ -81,13 +81,12 @@ func (t *FIOTemplatefiles) GetAttr(name string, context *fuse.Context) (*fuse.At
 }
 
 func (t *FIOTemplatefiles) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
-	u,err := sfsh.GetUser(context)
+	u, err := sfsh.GetUser(context)
 	if err != nil {
 		return nil, fuse.EPERM
 	}
 	logger = sfsl.DefaultEntry(name, u)
 	logger.Debug("calling operation")
-
 
 	// get filepath to templates
 	filepath := t.getCorrectPath(name)
@@ -101,17 +100,17 @@ func (t *FIOTemplatefiles) OpenDir(name string, context *fuse.Context) ([]fuse.D
 	// check whether filepath is a directory
 	// https://stackoverflow.com/questions/8824571/golang-determining-whether-file-points-to-file-or-directory
 	if !file.Mode().IsDir() {
-		logger.WithFields(log.Fields{"filepath":filepath}).Error("not a directory")
+		logger.WithFields(log.Fields{"filepath": filepath}).Error("not a directory")
 		return nil, fuse.ENOTDIR
 	}
 
-	entries,err := ioutil.ReadDir(filepath)
+	entries, err := ioutil.ReadDir(filepath)
 	if err != nil {
 		logger.Error(err)
 		return nil, fuse.EBUSY
 	}
 	dirs := []fuse.DirEntry{}
-	for _,e := range entries {
+	for _, e := range entries {
 		d := fuse.DirEntry{
 			Name: e.Name(),
 			Mode: uint32(e.Mode()),
@@ -122,7 +121,7 @@ func (t *FIOTemplatefiles) OpenDir(name string, context *fuse.Context) ([]fuse.D
 }
 
 func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
-	u,err := sfsh.GetUser(context)
+	u, err := sfsh.GetUser(context)
 	if err != nil {
 		return nil, fuse.EPERM
 	}
@@ -142,7 +141,7 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 	// check whether filepath is a file
 	// https://stackoverflow.com/questions/8824571/golang-determining-whether-file-points-to-file-or-directory
 	if !file.Mode().IsRegular() {
-		logger.WithFields(log.Fields{"filepath":filepath}).Error("not a directory")
+		logger.WithFields(log.Fields{"filepath": filepath}).Error("not a directory")
 		return nil, fuse.EISDIR
 	}
 
@@ -161,9 +160,9 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 	// https://stackoverflow.com/questions/23454940/getting-bytes-buffer-does-not-implement-io-writer-error-message
 	var buf bytes.Buffer
 	secret := secret{
-		flags: flags,
+		flags:   flags,
 		context: context,
-		t: t,
+		t:       t,
 	}
 
 	err = parser.Execute(&buf, secret)
@@ -193,22 +192,19 @@ func (t *FIOTemplatefiles) getCorrectPath(name string) string {
 	//return filepath
 }
 
-
 // Get is the function that will be called from inside of the templatefile.
 // You need to use following scheme to get secrets substituted:
 //  {{ .Get "path/to/secret" }}
 func (s secret) Get(filepath string) (string, error) {
 	sto := store.GetStore()
-  content, status := sto.Open(filepath, s.flags, s.context)
+	content, status := sto.Open(filepath, s.flags, s.context)
 	if status != fuse.OK {
-		logger.WithFields(log.Fields{"fuse.Status":status}).Error("encountered error while loading secret from store")
+		logger.WithFields(log.Fields{"fuse.Status": status}).Error("encountered error while loading secret from store")
 		//return "", errors.New("There was an error while loading Secret from store, fuse.Status="+fmt.Sprint(status))
 		return "", errors.New(fmt.Sprint(status))
 	}
 	return content, nil
 }
-
-
 
 func init() {
 	fioprov := FIOTemplatefiles{

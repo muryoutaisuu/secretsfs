@@ -5,13 +5,13 @@
 // fio.RegisterProvider(fm FIOMap) function.
 // The FIOMap makes sure that mountpath in the high-top filesystem and FIO plugin
 // are always mapped correctly.
-// 
+//
 // Also initializes variable logging for shared (and consistent) Logging.
 package fio
 
-import(
-	"github.com/spf13/viper"
+import (
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/muryoutaisuu/secretsfs/pkg/store"
 )
@@ -31,7 +31,7 @@ var logger = log.NewEntry(log.StandardLogger())
 // If not, only register it in Disabled state
 func RegisterProvider(fm *FIOMap) {
 	fios := viper.GetStringSlice("fio.enabled")
-	for _,f := range fios {
+	for _, f := range fios {
 		if f == fm.Provider.FIOPath() {
 			fm.Enabled = true
 		}
@@ -45,10 +45,6 @@ func RegisterProvider(fm *FIOMap) {
 func FIOMaps() map[string]*FIOMap {
 	return fiomaps
 }
-
-
-
-
 
 func init() {
 	sto = store.GetStore()

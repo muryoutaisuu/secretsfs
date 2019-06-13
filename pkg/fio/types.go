@@ -28,5 +28,5 @@ type FIOProvider interface {
 // Used for registering FIOProviders.
 type FIOMap struct {
 	Provider FIOProvider
-	Enabled bool
+	Enabled  bool
 }

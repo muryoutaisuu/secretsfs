@@ -4,8 +4,8 @@
 package config
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -99,12 +99,11 @@ func InitConfig() {
 
 	// also read vault addr env
 	// needs both parameters for BindEnv, else prefix would be prefixed
-	viper.BindEnv("store.vault.addr","VAULT_ADDR")
-
+	viper.BindEnv("store.vault.addr", "VAULT_ADDR")
 
 	// read config file specific things first and overwrite if necessary
 	viper.SetConfigName("secretsfs")
-	viper.AddConfigPath("$HOME/.secretsfs")  // call multiple times to add many search paths
+	viper.AddConfigPath("$HOME/.secretsfs") // call multiple times to add many search paths
 	if viper.IsSet("general.configuration.configfile") {
 		viper.SetConfigName(viper.GetString("general.configuration.configfile"))
 	}
@@ -114,13 +113,13 @@ func InitConfig() {
 	viper.AddConfigPath("/etc/secretsfs/")
 	if viper.IsSet("general.configuration.paths") {
 		paths := viper.GetStringSlice("general.configuration.paths")
-		for _,p := range paths {
+		for _, p := range paths {
 			viper.AddConfigPath(p)
 		}
 	}
 
 	// read configuration from config files
-	err := viper.MergeInConfig() // Find and read the config files
+	err := viper.MergeInConfig()                                                                                       // Find and read the config files
 	if err != nil && !strings.Contains(err.Error(), "Config File") && !strings.Contains(err.Error(), "Not Found in") { // Handle errors reading the config file
 		panic(fmt.Errorf("%s\n", err))
 	}

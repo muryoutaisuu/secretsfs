@@ -16,8 +16,8 @@ import (
 
 func DefaultEntry(name string, user *user.User) *log.Entry {
 	return log.WithFields(log.Fields{
-		"name": name,
-		"userid": user.Uid,
+		"name":     name,
+		"userid":   user.Uid,
 		"username": user.Username,
 	})
 }

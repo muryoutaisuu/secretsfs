@@ -3,8 +3,8 @@ package store
 import (
 	"os/user"
 
-	"github.com/spf13/viper"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/muryoutaisuu/secretsfs/pkg/sfslog"
 )
@@ -40,9 +40,8 @@ func GetStores() []string {
 }
 
 func defaultEntry(name string, user *user.User) *log.Entry {
-	return sfslog.DefaultEntry(name,user)
+	return sfslog.DefaultEntry(name, user)
 }
-
 
 func init() {
 	stores = []string{}

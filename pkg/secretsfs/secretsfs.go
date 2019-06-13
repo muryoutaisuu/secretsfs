@@ -19,12 +19,11 @@
 // inspired by this example: https://github.com/hanwen/go-fuse/blob/master/example/hello/main.go
 package secretsfs
 
-
 import (
 	"errors"
-	"strings"
-	"path/filepath"
 	"os/user"
+	"path/filepath"
+	"strings"
 
 	"github.com/hanwen/go-fuse/fuse"
 	"github.com/hanwen/go-fuse/fuse/nodefs"
@@ -32,9 +31,9 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/muryoutaisuu/secretsfs/pkg/fio"
-	"github.com/muryoutaisuu/secretsfs/pkg/store"
-	"github.com/muryoutaisuu/secretsfs/pkg/sfslog"
 	sfsh "github.com/muryoutaisuu/secretsfs/pkg/sfshelpers"
+	"github.com/muryoutaisuu/secretsfs/pkg/sfslog"
+	"github.com/muryoutaisuu/secretsfs/pkg/store"
 )
 
 // logging
@@ -42,11 +41,11 @@ var logger = log.NewEntry(log.StandardLogger())
 
 // SecretsFS is the high-top filesystem.
 // It contains references to FIOMap (mapping mountpath to a plugin) and the
-// currently used store. 
-// 
+// currently used store.
+//
 type SecretsFS struct {
 	pathfs.FileSystem
-	fms map[string]*fio.FIOMap
+	fms   map[string]*fio.FIOMap
 	store store.Store
 }
 
@@ -59,18 +58,18 @@ func NewSecretsFS(fs pathfs.FileSystem, fms map[string]*fio.FIOMap, s store.Stor
 	}
 	sfs := SecretsFS{
 		FileSystem: fs,
-		fms: fms,
-		store: s,
+		fms:        fms,
+		store:      s,
 	}
 	return &sfs, nil
 }
 
 func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
-	logger.WithFields(log.Fields{"name":name, "context":context}).Info("log values")
+	logger.WithFields(log.Fields{"name": name, "context": context}).Info("log values")
 	root, subpath := rootName(name)
-	u,err := sfsh.GetUser(context)
+	u, err := sfsh.GetUser(context)
 	if err != nil {
-		logger.WithFields(log.Fields{"name":name, "context":context, "error":err}).Info("got error while getting user information")
+		logger.WithFields(log.Fields{"name": name, "context": context, "error": err}).Info("got error while getting user information")
 		return nil, fuse.EPERM
 	}
 	logger = defaultEntry(name, u, root, subpath)
@@ -78,22 +77,22 @@ func (sfs *SecretsFS) GetAttr(name string, context *fuse.Context) (*fuse.Attr, f
 
 	if root == "" && subpath == "" {
 		logger.Info("successfully delivered attributes")
-		return &fuse.Attr{Mode: fuse.S_IFDIR | 0755,}, fuse.OK
+		return &fuse.Attr{Mode: fuse.S_IFDIR | 0755}, fuse.OK
 	}
-	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
+	if _, ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
 		logger.Info("successfully delivered attributes")
 		return sfs.fms[root].Provider.GetAttr(subpath, context)
 	}
-	logger.WithFields(log.Fields{"name":name, "context":context}).Info("no element found")
+	logger.WithFields(log.Fields{"name": name, "context": context}).Info("no element found")
 	return &fuse.Attr{}, fuse.ENOENT
 }
 
 func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirEntry, code fuse.Status) {
-	logger.WithFields(log.Fields{"name":name, "context":context}).Info("log values")
+	logger.WithFields(log.Fields{"name": name, "context": context}).Info("log values")
 	root, subpath := rootName(name)
-	u,err := sfsh.GetUser(context)
+	u, err := sfsh.GetUser(context)
 	if err != nil {
-		logger.WithFields(log.Fields{"name":name, "context":context, "error":err}).Info("got error while getting user information")
+		logger.WithFields(log.Fields{"name": name, "context": context, "error": err}).Info("got error while getting user information")
 		return nil, fuse.EPERM
 	}
 	logger = defaultEntry(name, u, root, subpath)
@@ -107,52 +106,49 @@ func (sfs *SecretsFS) OpenDir(name string, context *fuse.Context) (c []fuse.DirE
 		logger.Info("successfully listed directory")
 		return c, fuse.OK
 	}
-	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
+	if _, ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
 		logger.Info("successfully listed directory")
 		return sfs.fms[root].Provider.OpenDir(subpath, context)
 	}
-	logger.WithFields(log.Fields{"name":name, "context":context}).Info("no element found")
+	logger.WithFields(log.Fields{"name": name, "context": context}).Info("no element found")
 	return nil, fuse.ENOENT
 }
 
 func (sfs *SecretsFS) Open(name string, flags uint32, context *fuse.Context) (file nodefs.File, code fuse.Status) {
-	logger.WithFields(log.Fields{"name":name, "context":context}).Info("log values")
+	logger.WithFields(log.Fields{"name": name, "context": context}).Info("log values")
 	root, subpath := rootName(name)
-	u,err := sfsh.GetUser(context)
+	u, err := sfsh.GetUser(context)
 	if err != nil {
-		logger.WithFields(log.Fields{"name":name, "context":context, "error":err}).Info("got error while getting user information")
+		logger.WithFields(log.Fields{"name": name, "context": context, "error": err}).Info("got error while getting user information")
 		return nil, fuse.EPERM
 	}
 	logger = defaultEntry(name, u, root, subpath)
 	logger.Info("calling operation")
 
 	if name == "" {
-		logger.WithFields(log.Fields{"name":name, "context":context}).Info("no element found")
+		logger.WithFields(log.Fields{"name": name, "context": context}).Info("no element found")
 		return nil, fuse.EINVAL
 	}
-	if _,ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
+	if _, ok := sfs.fms[root]; ok && sfs.fms[root].Enabled {
 		logger.Info("successfully delivered file")
 		return sfs.fms[root].Provider.Open(subpath, flags, context)
 	}
-	logger.WithFields(log.Fields{"name":name, "context":context}).Info("no element found")
+	logger.WithFields(log.Fields{"name": name, "context": context}).Info("no element found")
 	return nil, fuse.EPERM
 }
 
-
 func defaultEntry(name string, user *user.User, root, subpath string) *log.Entry {
 	return sfslog.DefaultEntry(name, user).WithFields(log.Fields{
-    "root": root,
-    "subpath": subpath,
-  })
+		"root":    root,
+		"subpath": subpath,
+	})
 }
-
-
 
 // rootName calculates, which FIO the call came from and what the subpath for
 // the FIO is
 func rootName(path string) (root, subpath string) {
-  list := strings.Split(path, string(filepath.Separator))
-  root = list[0]
-  subpath = filepath.Join(list[1:]...)
-  return
+	list := strings.Split(path, string(filepath.Separator))
+	root = list[0]
+	subpath = filepath.Join(list[1:]...)
+	return
 }

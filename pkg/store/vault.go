@@ -2,17 +2,17 @@ package store
 
 import (
 	"errors"
-	"strconv"
 	"io/ioutil"
 	"os/user"
-	"strings"
 	"path"
 	"path/filepath"
+	"strconv"
+	"strings"
 
-	"github.com/hashicorp/vault/api"
 	"github.com/hanwen/go-fuse/fuse"
-	"github.com/spf13/viper"
+	"github.com/hashicorp/vault/api"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	sfsh "github.com/muryoutaisuu/secretsfs/pkg/sfshelpers"
 )
@@ -28,13 +28,13 @@ var DTDATA string
 
 // Filetype define the type of the returned value element of vault
 type Filetype byte
-const (
-	CTrueDir   Filetype = 0 // exists in Vault as a directory
-	CFile      Filetype = 1 // Key of a key=value pair, emulated as a directory
-	CValue     Filetype = 2 // Value of a key=value pair
-	CNull      Filetype = 3 // not a valid vault element
-)
 
+const (
+	CTrueDir Filetype = 0 // exists in Vault as a directory
+	CFile    Filetype = 1 // Key of a key=value pair, emulated as a directory
+	CValue   Filetype = 2 // Value of a key=value pair
+	CNull    Filetype = 3 // not a valid vault element
+)
 
 // Vault struct implements the calls called by fuse and returns accordingly
 // requested resources.
@@ -44,7 +44,7 @@ type Vault struct {
 }
 
 func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
-	u,err := sfsh.GetUser(context)
+	u, err := sfsh.GetUser(context)
 	if err != nil {
 		return nil, fuse.EPERM
 	}
@@ -67,7 +67,7 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 
 	// get type
 	_, t := v.getTypes(name)
-	logger.WithFields(log.Fields{"types":t}).Debug("got types")
+	logger.WithFields(log.Fields{"types": t}).Debug("got types")
 
 	// act according to type
 	switch {
@@ -88,7 +88,7 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 }
 
 func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
-	u,err := sfsh.GetUser(context)
+	u, err := sfsh.GetUser(context)
 	if err != nil {
 		return nil, fuse.EPERM
 	}
@@ -103,11 +103,11 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 	defer v.client.ClearToken()
 
 	_, t := v.getTypes(name)
-	logger.WithFields(log.Fields{"types":t}).Debug("got types")
+	logger.WithFields(log.Fields{"types": t}).Debug("got types")
 
 	finuniqnames := make(map[string]struct{})
 	p := &finuniqnames
-	logger.WithFields(log.Fields{"finuniqnames":finuniqnames}).Debug("got finuniqnames")
+	logger.WithFields(log.Fields{"finuniqnames": finuniqnames}).Debug("got finuniqnames")
 	if t[CTrueDir] {
 		err := v.listDirUniqueNames(name, p)
 		if err != nil && !t[CFile] {
@@ -132,7 +132,7 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 				Name: k,
 				Mode: fuse.S_IFREG,
 			}
-			findirs = append(findirs,d)
+			findirs = append(findirs, d)
 		}
 		return findirs, fuse.OK
 	}
@@ -140,7 +140,7 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 }
 
 func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, fuse.Status) {
-	u,err := sfsh.GetUser(context)
+	u, err := sfsh.GetUser(context)
 	if err != nil {
 		return "", fuse.EPERM
 	}
@@ -154,8 +154,8 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 	defer logger.Debug("successfully cleared token")
 	defer v.client.ClearToken()
 
-	s,t := v.getTypes(name)
-	logger.WithFields(log.Fields{"types":t}).Debug("got types")
+	s, t := v.getTypes(name)
+	logger.WithFields(log.Fields{"types": t}).Debug("got types")
 
 	switch {
 	case t[CTrueDir]:
@@ -164,16 +164,16 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 		return "", fuse.EISDIR
 	case t[CValue]:
 		// get substituted value (if substitution must be done, else keep original)
-		logger.WithFields(log.Fields{"variable":"name","value":name}).Debug("before substituting")
+		logger.WithFields(log.Fields{"variable": "name", "value": name}).Debug("before substituting")
 		name, _, err := v.getCorrectName(name, true)
 		if err != nil {
 			logger.Error(err)
 			return "", fuse.EIO
 		}
-		logger.WithFields(log.Fields{"variable":"name","value":name}).Debug("after substituting")
+		logger.WithFields(log.Fields{"variable": "name", "value": name}).Debug("after substituting")
 
-		logger.WithFields(log.Fields{"s[CValue]":s[CValue]}).Debug("log values")
-		data,ok := s[CValue].Data[name].(string)
+		logger.WithFields(log.Fields{"s[CValue]": s[CValue]}).Debug("log values")
+		data, ok := s[CValue].Data[name].(string)
 		if ok != true {
 			return "", fuse.EIO
 		}
@@ -182,12 +182,9 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 	return "", fuse.ENOENT
 }
 
-func (v *Vault) String() (string) {
+func (v *Vault) String() string {
 	return "vault"
 }
-
-
-
 
 // setToken is called within the fuse interaction calls and sets a working
 // accesstoken depending on the calling user
@@ -198,17 +195,17 @@ func (v *Vault) String() (string) {
 // }
 // defer v.client.ClearToken()
 func (v *Vault) setToken(context *fuse.Context) error {
-	u,err := user.LookupId(strconv.Itoa(int(context.Owner.Uid)))
+	u, err := user.LookupId(strconv.Itoa(int(context.Owner.Uid)))
 	if err != nil {
 		return err
 	}
-	a,err := v.getAccessToken(u)
+	a, err := v.getAccessToken(u)
 	if err != nil {
 		return err
 	}
 	v.client.SetToken(a.Auth.ClientToken)
 	// TODO: Remove this debug line, not secure!!
-	logger.WithFields(log.Fields{"token":v.client.Token()}).Debug("log values")
+	logger.WithFields(log.Fields{"token": v.client.Token()}).Debug("log values")
 	return nil
 }
 
@@ -216,7 +213,7 @@ func (v *Vault) setToken(context *fuse.Context) error {
 // users home and authenticates with it and returns afterwards the secret
 // containing the accesstoken
 func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
-	auth,err := v.readAuthToken(u)
+	auth, err := v.readAuthToken(u)
 	if err != nil {
 		logger.Error(err)
 		return &api.Secret{}, err
@@ -225,79 +222,79 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 	postdata := map[string]interface{}{
 		"role_id": auth,
 	}
-	logger.WithFields(log.Fields{"login_payload":postdata}).Debug("authenticating")
-	resp,err := v.client.Logical().Write("auth/approle/login", postdata)
+	logger.WithFields(log.Fields{"login_payload": postdata}).Debug("authenticating")
+	resp, err := v.client.Logical().Write("auth/approle/login", postdata)
 	if err != nil {
 		logger.Error("got an error while authenticating")
-		return nil,err
+		return nil, err
 	}
-	logger.WithFields(log.Fields{"resp":resp, "resp.Data":resp.Data, "ClientToken":resp.Auth.ClientToken}).Debug("log values")
+	logger.WithFields(log.Fields{"resp": resp, "resp.Data": resp.Data, "ClientToken": resp.Auth.ClientToken}).Debug("log values")
 	if resp.Auth == nil {
 		return resp, errors.New("no auth info returned")
 	}
 	logger.Debug("successfully got accesstoken")
-	return resp,err
+	return resp, err
 }
 
 // readAuthToken opens the file containing the authenticationtoken and trims it
 func (v *Vault) readAuthToken(u *user.User) (string, error) {
 	path := finIdPath(u)
-	logger.WithFields(log.Fields{"finIdPath":path}).Debug("log values")
-	o,err := ioutil.ReadFile(path)
+	logger.WithFields(log.Fields{"finIdPath": path}).Debug("log values")
+	o, err := ioutil.ReadFile(path)
 	if err != nil {
 		logger.Error(err)
-		return "",err
+		return "", err
 	}
 	authToken := strings.TrimSuffix(string(o), "\n")
-	logger.WithFields(log.Fields{"finIdPath":path}).Debug("authtoken successfully read")
-	return authToken,nil
+	logger.WithFields(log.Fields{"finIdPath": path}).Debug("authtoken successfully read")
+	return authToken, nil
 }
 
 // listDir lists all entries inside a vault directory type=CTrueDir
 func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
-	s,err := v.listDirNames(name)
+	s, err := v.listDirNames(name)
 	if err != nil {
-		logger.WithFields(log.Fields{"secret":s, "error":err}).Error("got an error in listDirNames")
+		logger.WithFields(log.Fields{"secret": s, "error": err}).Error("got an error in listDirNames")
 		return nil, errors.New("Got an error in listDirNames")
 	}
-	logger.WithFields(log.Fields{"secret":s}).Debug("log values")
+	logger.WithFields(log.Fields{"secret": s}).Debug("log values")
 	dirs := []fuse.DirEntry{}
-	logger.WithFields(log.Fields{"dirs":dirs}).Debug("log values")
+	logger.WithFields(log.Fields{"dirs": dirs}).Debug("log values")
 	for i := 0; i < len(s); i++ {
 		d := fuse.DirEntry{
-			Name:  path.Base(s[i]),
+			Name: path.Base(s[i]),
 			Mode: fuse.S_IFREG,
 		}
 		dirs = append(dirs, d)
-		logger.WithFields(log.Fields{"dirs":dirs}).Debug("log values")
+		logger.WithFields(log.Fields{"dirs": dirs}).Debug("log values")
 	}
-	return &dirs,nil
+	return &dirs, nil
 }
 
 // listDirNames lists all entries inside a vault directory type=CTrueDir and
 // returns a []string with the names of those directories
 func (v *Vault) listDirNames(name string) ([]string, error) {
-	logger.WithFields(log.Fields{"url":v.client.Address()+MTDATA+name}).Debug("listing directory in vault")
-	s,err := v.client.Logical().List(MTDATA + name+"/")
-	logger.WithFields(log.Fields{"url":v.client.Address()+MTDATA+name, "secret":s}).Debug("log values")
+	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name}).Debug("listing directory in vault")
+	s, err := v.client.Logical().List(MTDATA + name + "/")
+	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name, "secret": s}).Debug("log values")
 
 	// can't list in vault
 	if err != nil || s == nil {
 		if err == nil {
-			err = errors.New("cant list path "+MTDATA+name+" in vault")
+			err = errors.New("cant list path " + MTDATA + name + " in vault")
 		}
 		logger.Error(err)
 		return nil, err
 	}
 
 	names := []string{}
-	for _,v := range s.Data["keys"].([]interface{}) {
+	for _, v := range s.Data["keys"].([]interface{}) {
 		names = append(names, v.(string))
 	}
 	return names, nil
 }
 
-func (v *Vault) listDirUniqueNames(name string, un *map[string]struct{}) (error) {
+func (v *Vault) listDirUniqueNames(name string, un *map[string]struct{}) error {
 	if un == nil {
 		return errors.New("nil is not a supported value for un")
 	}
@@ -306,30 +303,29 @@ func (v *Vault) listDirUniqueNames(name string, un *map[string]struct{}) (error)
 		return errors.New("Got an error in listDirNames")
 	}
 
-	for _,v := range names {
+	for _, v := range names {
 		(*un)[filepath.Base(v)] = struct{}{}
 	}
 	return nil
 }
-
 
 // listFile lists the contents of a virtual directory in secretsfs
 // (aka a file in vault) type=CFile
 // returns a Slice containing all valid entries
 // valid means no entries containing a / in their names
 func (v *Vault) listFile(name string) (*[]fuse.DirEntry, error) {
-	data,err := v.listFileNames(name)
+	data, err := v.listFileNames(name)
 	if err != nil {
 		return nil, err
 	}
 
 	dirs := v.createFileEntries(data)
-	logger.WithFields(log.Fields{"dirs":dirs}).Debug("log values")
-	return dirs,nil
+	logger.WithFields(log.Fields{"dirs": dirs}).Debug("log values")
+	return dirs, nil
 }
 
 func (v *Vault) createFileEntries(names []string) (dirs *[]fuse.DirEntry) {
-	for _,v := range names {
+	for _, v := range names {
 		// special treatment for entries containing the substitution character
 		if strings.Contains(v, "/") { // viper.GetString("general.substchar")) { // strings.Contains(k,"/") {
 			v = strings.Replace(v, "/", string(viper.GetString("general.substchar")[0]), -1)
@@ -347,25 +343,25 @@ func (v *Vault) createFileEntries(names []string) (dirs *[]fuse.DirEntry) {
 // listFileNames is very similar to listFile, but instead of returning fully
 // finished fuse.DirEntry types, it only returns []string containing the keys
 func (v *Vault) listFileNames(name string) ([]string, error) {
-	logger.WithFields(log.Fields{"url":v.client.Address()+DTDATA+name}).Debug("reading secret in vault")
-	s,err := v.client.Logical().Read(DTDATA + name)
+	logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name}).Debug("reading secret in vault")
+	s, err := v.client.Logical().Read(DTDATA + name)
 	if err != nil || s == nil {
 		if err == nil {
-			logger.WithFields(log.Fields{"url":v.client.Address()+DTDATA+name}).Error("can't read secret")
+			logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name}).Error("can't read secret")
 			errors.New("can't read")
 		}
-		return nil,err
+		return nil, err
 	}
-	logger.WithFields(log.Fields{"secret":s, "secret.Data":s.Data}).Debug("log values")
+	logger.WithFields(log.Fields{"secret": s, "secret.Data": s.Data}).Debug("log values")
 
-  filenames := []string{}
+	filenames := []string{}
 	for k := range s.Data {
 		filenames = append(filenames, k)
 	}
 	return filenames, nil
 }
 
-func (v *Vault) listFileUniqueNames(name string, un *map[string]struct{}) (error) {
+func (v *Vault) listFileUniqueNames(name string, un *map[string]struct{}) error {
 	if un == nil {
 		return errors.New("nil is not a supported value for un")
 	}
@@ -374,7 +370,7 @@ func (v *Vault) listFileUniqueNames(name string, un *map[string]struct{}) (error
 		return errors.New("Got an error in listFileNames")
 	}
 
-	for _,v := range names {
+	for _, v := range names {
 		(*un)[v] = struct{}{}
 	}
 	return nil
@@ -383,24 +379,24 @@ func (v *Vault) listFileUniqueNames(name string, un *map[string]struct{}) (error
 // getType returns type of the requested resource
 // used by most fuse actions for simplifying reasons
 // types may be the defined FileType byte constants on top of this file
-func (v *Vault) getType(name string) (*api.Secret, Filetype){
-	logger.WithFields(log.Fields{"url":v.client.Address()+MTDATA+name}).Debug("listing directory in vault")
-	s,err := v.client.Logical().List(MTDATA + name + "/")
-	logger.WithFields(log.Fields{"url":v.client.Address()+MTDATA+name, "secret":s, "error":err}).Error("after listing directory in vault")
+func (v *Vault) getType(name string) (*api.Secret, Filetype) {
+	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name}).Debug("listing directory in vault")
+	s, err := v.client.Logical().List(MTDATA + name + "/")
+	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name, "secret": s, "error": err}).Error("after listing directory in vault")
 	if err == nil && s != nil {
 		return s, CTrueDir
 	}
 
-	logger.WithFields(log.Fields{"url":v.client.Address()+DTDATA+name}).Debug("reading secret in vault")
-	s,err = v.client.Logical().Read(DTDATA + name)
-	if err == nil && s!=nil {
+	logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name}).Debug("reading secret in vault")
+	s, err = v.client.Logical().Read(DTDATA + name)
+	if err == nil && s != nil {
 		return s, CFile
 	}
 
 	name = path.Dir(name) // clip last element
-	logger.WithFields(log.Fields{"url":v.client.Address()+DTDATA+name}).Debug("reading secret in vault")
-	s,err = v.client.Logical().Read(DTDATA + name)
-	if err == nil && s!=nil {
+	logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name}).Debug("reading secret in vault")
+	s, err = v.client.Logical().Read(DTDATA + name)
+	if err == nil && s != nil {
 		return s, CValue
 	}
 
@@ -418,15 +414,15 @@ func (v *Vault) getTypes(name string) (map[Filetype]*api.Secret, map[Filetype]bo
 	r := make(map[Filetype]bool)
 	rs := make(map[Filetype]*api.Secret)
 
-	logger.WithFields(log.Fields{"url":v.client.Address()+MTDATA+name}).Debug("listing directory in vault")
-	s,err := v.client.Logical().List(MTDATA + name + "/")
-	logger.WithFields(log.Fields{"url":v.client.Address()+MTDATA+name, "secret":s, "error":err}).Debug("after listing directory in vault")
+	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name}).Debug("listing directory in vault")
+	s, err := v.client.Logical().List(MTDATA + name + "/")
+	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name, "secret": s, "error": err}).Debug("after listing directory in vault")
 	r[CTrueDir] = err == nil && s != nil
 	rs[CTrueDir] = s
 
-	logger.WithFields(log.Fields{"url":v.client.Address()+DTDATA+name}).Debug("reading secret in vault")
-	s,err = v.client.Logical().Read(DTDATA + name)
-	logger.WithFields(log.Fields{"url":v.client.Address()+DTDATA+name, "secret":s, "error":err}).Debug("after reading secret in vault")
+	logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name}).Debug("reading secret in vault")
+	s, err = v.client.Logical().Read(DTDATA + name)
+	logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name, "secret": s, "error": err}).Debug("after reading secret in vault")
 	r[CFile] = err == nil && s != nil
 	rs[CFile] = s
 
@@ -441,9 +437,9 @@ func (v *Vault) getTypes(name string) (map[Filetype]*api.Secret, map[Filetype]bo
 	// this would cause errors in any further calculations
 	if !r[CFile] {
 		name = path.Dir(name) // clip last element
-		logger.WithFields(log.Fields{"url":v.client.Address()+DTDATA+name}).Debug("reading secret in vault")
-		s,err = v.client.Logical().Read(DTDATA + name)
-		logger.WithFields(log.Fields{"url":v.client.Address()+DTDATA+name, "secret":s, "error":err}).Debug("after reading secret in vault")
+		logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name}).Debug("reading secret in vault")
+		s, err = v.client.Logical().Read(DTDATA + name)
+		logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name, "secret": s, "error": err}).Debug("after reading secret in vault")
 		r[CValue] = err == nil && s != nil
 		rs[CValue] = s
 	} else {
@@ -451,7 +447,7 @@ func (v *Vault) getTypes(name string) (map[Filetype]*api.Secret, map[Filetype]bo
 		rs[CValue] = nil
 	}
 
-	return rs,r
+	return rs, r
 }
 
 // getCorrectName checks whether a path contains any maybe substituted characters.
@@ -476,40 +472,40 @@ func (v *Vault) getCorrectName(pathname string, nameonly bool) (string, bool, er
 
 	// check whether name contains any characters, that may be substituted
 	if !strings.Contains(value, viper.GetString("general.substchar")) {
-		logger.WithFields(log.Fields{"variable":"value","value":value}).Debug("contains no characters that may be substituted")
+		logger.WithFields(log.Fields{"variable": "value", "value": value}).Debug("contains no characters that may be substituted")
 		return value, false, nil
 	}
 
 	dir := path.Dir(pathname)
-	logger.WithFields(log.Fields{"variable":"dir","value":dir}).Debug("doing a listFileNames with specific dir")
-	filenames,err := v.listFileNames(dir)
+	logger.WithFields(log.Fields{"variable": "dir", "value": dir}).Debug("doing a listFileNames with specific dir")
+	filenames, err := v.listFileNames(dir)
 	if err != nil {
-		logger.WithFields(log.Fields{"variable":"dir","value":dir, "error":err}).Debug("got an error doing a listFileNames with specific dir")
+		logger.WithFields(log.Fields{"variable": "dir", "value": dir, "error": err}).Debug("got an error doing a listFileNames with specific dir")
 		return "", false, err
 	}
-	logger.WithFields(log.Fields{"variable":"filenames","value":filenames}).Debug("got actual contents of vault secret")
+	logger.WithFields(log.Fields{"variable": "filenames", "value": filenames}).Debug("got actual contents of vault secret")
 
 	possibilities := sfsh.SubstitutionPossibilities(value, viper.GetString("general.substchar"), "/")
-	logger.WithFields(log.Fields{"variable":"possibilities", "value":possibilities}).Debug("got all possible key names")
-	for _,f := range filenames {
-		for _,p := range possibilities {
+	logger.WithFields(log.Fields{"variable": "possibilities", "value": possibilities}).Debug("got all possible key names")
+	for _, f := range filenames {
+		for _, p := range possibilities {
 			if f == p {
-				logger.WithFields(log.Fields{"variable":"filename", "value":f}).Debug("log values")
+				logger.WithFields(log.Fields{"variable": "filename", "value": f}).Debug("log values")
 				if nameonly {
 					return f, true, nil
 				}
-				return dir+"/"+f, true, nil
+				return dir + "/" + f, true, nil
 			}
 		}
 	}
-	logger.WithFields(log.Fields{"variable":"possibilities", "value":possibilities}).Error("can't find any substituted possibilities")
-	return "", false, errors.New("can't find any substituted possibilties for value "+value)
+	logger.WithFields(log.Fields{"variable": "possibilities", "value": possibilities}).Error("can't find any substituted possibilities")
+	return "", false, errors.New("can't find any substituted possibilties for value " + value)
 }
 
 // finIdPath returns the resolved path of the users vault roleid file path.
 // This means that $HOME will be resolved to the users home directory, and that
 // the users alias is applied
-func finIdPath(u *user.User) (string) {
+func finIdPath(u *user.User) string {
 	path := strings.Replace(viper.GetString("store.vault.roleid.file"), "$HOME", u.HomeDir, 1)
 
 	specialusers := viper.GetStringMapString("store.vault.roleid.useroverride")
@@ -522,14 +518,28 @@ func finIdPath(u *user.User) (string) {
 
 func configureTLS(c *api.Config) error {
 	tls := api.TLSConfig{}
-	if viper.IsSet("tls.cacert") { tls.CACert = viper.GetString("tls.cacert") }
-	if viper.IsSet("tls.capath") { tls.CAPath = viper.GetString("tls.capath") }
-	if viper.IsSet("tls.clientcert") { tls.ClientCert = viper.GetString("tls.clientcert") }
-	if viper.IsSet("tls.clientkey") { tls.ClientKey = viper.GetString("tls.clientkey") }
-	if viper.IsSet("tls.tlsservername") { tls.TLSServerName = viper.GetString("tls.tlsservername") }
-	if viper.IsSet("tls.insecure") { tls.Insecure = viper.GetBool("tls.insecure") }
-	err :=  c.ConfigureTLS(&tls)
-	if c.Error != nil { return c.Error }
+	if viper.IsSet("tls.cacert") {
+		tls.CACert = viper.GetString("tls.cacert")
+	}
+	if viper.IsSet("tls.capath") {
+		tls.CAPath = viper.GetString("tls.capath")
+	}
+	if viper.IsSet("tls.clientcert") {
+		tls.ClientCert = viper.GetString("tls.clientcert")
+	}
+	if viper.IsSet("tls.clientkey") {
+		tls.ClientKey = viper.GetString("tls.clientkey")
+	}
+	if viper.IsSet("tls.tlsservername") {
+		tls.TLSServerName = viper.GetString("tls.tlsservername")
+	}
+	if viper.IsSet("tls.insecure") {
+		tls.Insecure = viper.GetBool("tls.insecure")
+	}
+	err := c.ConfigureTLS(&tls)
+	if c.Error != nil {
+		return c.Error
+	}
 	return err
 }
 
@@ -547,7 +557,7 @@ func init() {
 	}
 
 	// create client
-	c,err := api.NewClient(conf)
+	c, err := api.NewClient(conf)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -563,4 +573,3 @@ func init() {
 		DTDATA = viper.GetString("store.vault.dtdata")
 	}
 }
-

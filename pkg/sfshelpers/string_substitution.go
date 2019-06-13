@@ -10,7 +10,7 @@ package sfshelpers
 //		mytest := SubstitutionPossibilities(orig, "_", "/")
 //		fmt.Printf("orig: %s\nvariants: %s", orig, mytest)
 //	}
-//	
+//
 // output will be:
 //	orig: a_b_c_d
 //	variants: [a_b_c_d a_b_c/d a_b/c_d a_b/c/d a/b_c_d a/b_c/d a/b/c_d a/b/c/d]
@@ -23,16 +23,16 @@ func SubstitutionPossibilities(s, b, n string) []string {
 	} else {
 		mys = []string{s}
 		if needInv(s, b) {
-			mys = append(mys, inv(s,b,n))
+			mys = append(mys, inv(s, b, n))
 		}
 		return mys
 	}
 
 	lm := len(mys)
-	for i:=0; i<lm; i++ {
-		mys[i] = string(s[0])+mys[i]
-		if needInv(s,b) {
-			mys = append(mys, inv(s,b,n,)+mys[i][1:])
+	for i := 0; i < lm; i++ {
+		mys[i] = string(s[0]) + mys[i]
+		if needInv(s, b) {
+			mys = append(mys, inv(s, b, n)+mys[i][1:])
 		}
 	}
 	return mys
