@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.com/muryoutaisuu/secretsfs.svg?branch=master)](https://travis-ci.com/muryoutaisuu/secretsfs)
+[![Go Report Card](https://goreportcard.com/badge/github.com/muryoutaisuu/secretsfs)](https://goreportcard.com/report/github.com/muryoutaisuu/secretsfs)
+[![Documentation Status](https://readthedocs.org/projects/secretsfs/badge/?version=latest)](https://secretsfs.readthedocs.io/en/latest/?badge=latest)
 [![GoDoc](https://godoc.org/github.com/muryoutaisuu/secretsfs?status.svg)](https://godoc.org/github.com/muryoutaisuu/secretsfs/pkg)
 
 * [GoDoc](https://godoc.org/github.com/muryoutaisuu/secretsfs/pkg)
