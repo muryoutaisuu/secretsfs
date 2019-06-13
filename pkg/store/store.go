@@ -18,7 +18,7 @@ var stores []string
 // logging
 var logger = log.NewEntry(log.StandardLogger())
 
-// Store returns currently active Store Implementation
+// GetStore returns currently active Store Implementation
 func GetStore() Store {
 	return store
 }

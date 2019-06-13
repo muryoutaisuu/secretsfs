@@ -1,6 +1,4 @@
-// FUSE Input/Output (FIO)
-//
-// FIO stands for 'FUSE Input/Output' and provides the interface for programming
+// Package fio stands for 'FUSE Input/Output' and provides the interface for programming
 // FIO plugins for secretsfs. Those FIO plugins need to be registered with the
 // fio.RegisterProvider(fm FIOMap) function.
 // The FIOMap makes sure that mountpath in the high-top filesystem and FIO plugin

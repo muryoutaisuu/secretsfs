@@ -38,6 +38,7 @@ type secret struct {
 	t       *FIOTemplatefiles
 }
 
+// GetAttr implements fuse.GetAttr
 func (t *FIOTemplatefiles) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.Status) {
 	u, err := sfsh.GetUser(context)
 	if err != nil {
@@ -80,6 +81,7 @@ func (t *FIOTemplatefiles) GetAttr(name string, context *fuse.Context) (*fuse.At
 	return nil, fuse.EINVAL
 }
 
+// OpenDir implements fuse.OpenDir
 func (t *FIOTemplatefiles) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fuse.Status) {
 	u, err := sfsh.GetUser(context)
 	if err != nil {
@@ -120,6 +122,7 @@ func (t *FIOTemplatefiles) OpenDir(name string, context *fuse.Context) ([]fuse.D
 	return dirs, fuse.OK
 }
 
+// Open implements fuse.Open
 func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context) (nodefs.File, fuse.Status) {
 	u, err := sfsh.GetUser(context)
 	if err != nil {
@@ -179,6 +182,7 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 	return nodefs.NewDataFile(buf.Bytes()), fuse.OK
 }
 
+// FIOPath returns name of implemented FIO plugin
 func (t *FIOTemplatefiles) FIOPath() string {
 	return "templatefiles"
 }
