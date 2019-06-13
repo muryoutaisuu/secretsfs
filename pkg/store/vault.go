@@ -348,7 +348,7 @@ func (v *Vault) listFileNames(name string) ([]string, error) {
 	if err != nil || s == nil {
 		if err == nil {
 			logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name}).Error("can't read secret")
-			errors.New("can't read")
+			err = errors.New("can't read")
 		}
 		return nil, err
 	}
