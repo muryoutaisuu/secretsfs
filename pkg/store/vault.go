@@ -509,7 +509,8 @@ func finIdPath(u *user.User) string {
 	path := strings.Replace(viper.GetString("store.vault.roleid.file"), "$HOME", u.HomeDir, 1)
 
 	specialusers := viper.GetStringMapString("store.vault.roleid.useroverride")
-	if val, ok := specialusers[u.Name]; ok {
+	logger.WithFields(log.Fields{"specialusers": specialusers, "user.Username": u.Username}).Debug("log values")
+	if val, ok := specialusers[u.Username]; ok {
 		// replace $HOME also, if path was set user specific
 		path = strings.Replace(val, "$HOME", u.HomeDir, 1)
 	}
