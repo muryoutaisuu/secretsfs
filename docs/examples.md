@@ -72,19 +72,20 @@ store:
 
 # Templating
 
-The _TemplateFilesFIO_ works with a default directory, in which templatefiles are located and which is configured in the configuration file.
+The _TemplateFilesFIO_ works with a default directory, in which templatefiles are located and which is configurable in the configuration file via `fio.templatefiles.templatespath`.
 Secrets will be loaded from currently active store and are called inside of the template by following string:
 
 ```
 {{ .Get "<pathToSecret>" }}
 ```
 
-*__Note:__ The Quotes '"' around the pathToSecret are very important.
-That is due to golang templating notation, because the input will be validated as a string.
+*__Note:__ The Quotes <"> around the `<pathToSecret>` are very important.
+That is due to golang templating notation, so that the input will be validated as a string.
 If it is not quoted, the golang templating library will not validate the input as a string and hence secretsfs will return an error.*
 
-Any standard textfile configuration file formats may be used.
+Any (non-)standard textfile configuration file formats may be used.
 Just to list some of the mostly spread:
+
 * XML
 * JSON
 * YAML
@@ -98,7 +99,7 @@ A complete example may look like this:
 foo = {{ .Get "subdir/bar" }}
 ```
 
-_Note: Also see the file called [`templatefile.conf`](https://github.com/muryoutaisuu/secretsfs/blob/master/example/templatefile.conf)_
+_Note: Also see the file called [`example/templatefile.conf`](https://github.com/muryoutaisuu/secretsfs/blob/master/example/templatefile.conf)_
 
 # Mounting with Mountoptions
 
