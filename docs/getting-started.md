@@ -50,8 +50,10 @@ For RHEL7, there is a prebuilt .rpm package, you may download from [the project'
 
 There are two possible ways to start *secretsfs*:
 
-* Start it manually with `secretsfs <mountpath> [-o <mountoptions>] [&]]`
-* Start it with Systemd, use the predefined service in the examples folder
-** `cp example/secretsfs.service /usr/lib/systemd/system/secretsfs.service`
-** `systemctl start secretsfs`
-** `systemctl enable secretsfs`
+Either start it manually with `secretsfs <mountpath> [-o <mountoptions>] [&]]`, or start it with Systemd using the predefined service in the examples folder:
+
+* `cp example/secretsfs.service /usr/lib/systemd/system/secretsfs.service`
+* `systemctl start secretsfs`
+* `systemctl enable secretsfs`
+
+The Systemd definition also comes with your .rpm package installation.
