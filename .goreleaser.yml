@@ -1,7 +1,5 @@
 builds:
   - env:
-      - GO15VENDOREXPERIMENT=1
-      - GO111MODULE=off
     main: ./cmd/secretsfs
     goos:
       - linux
