@@ -52,8 +52,10 @@ There are two possible ways to start *secretsfs*:
 
 Either start it manually with `secretsfs <mountpath> [-o <mountoptions>] [&]]`, or start it with Systemd using the predefined service in the examples folder:
 
-* `cp example/secretsfs.service /usr/lib/systemd/system/secretsfs.service`
-* `systemctl start secretsfs`
-* `systemctl enable secretsfs`
+```bash
+cp example/secretsfs.service /usr/lib/systemd/system/secretsfs.service
+systemctl start secretsfs
+systemctl enable secretsfs
+```
 
 The Systemd definition also comes with your .rpm package installation.
