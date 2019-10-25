@@ -15,7 +15,6 @@
 testing.go
 sourceit
 *.swp
-secretsfs
 dist/
 site/
 
