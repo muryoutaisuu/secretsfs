@@ -62,8 +62,8 @@ func (v *Vault) GetAttr(name string, context *fuse.Context) (*fuse.Attr, fuse.St
 		logger.Error(err)
 		return nil, fuse.EACCES
 	}
-	defer logger.Debug("successfully cleared token")
-	defer v.client.ClearToken()
+	//defer logger.Debug("successfully cleared token")
+	//defer v.client.ClearToken()
 
 	// get type
 	_, t := v.getTypes(name)
@@ -99,8 +99,8 @@ func (v *Vault) OpenDir(name string, context *fuse.Context) ([]fuse.DirEntry, fu
 		logger.Error(err)
 		return nil, fuse.EACCES
 	}
-	defer logger.Debug("successfully cleared token")
-	defer v.client.ClearToken()
+	//defer logger.Debug("successfully cleared token")
+	//defer v.client.ClearToken()
 
 	_, t := v.getTypes(name)
 	logger.WithFields(log.Fields{"types": t}).Debug("got types")
@@ -151,8 +151,8 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 		logger.Error(err)
 		return "", fuse.EACCES
 	}
-	defer logger.Debug("successfully cleared token")
-	defer v.client.ClearToken()
+	//defer logger.Debug("successfully cleared token")
+	//defer v.client.ClearToken()
 
 	s, t := v.getTypes(name)
 	logger.WithFields(log.Fields{"types": t}).Debug("got types")
