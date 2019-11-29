@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
+	"github.com/muryoutaisuu/secretsfs/cmd/secretsfs/config"
 	"github.com/muryoutaisuu/secretsfs/pkg/fio"
 	"github.com/muryoutaisuu/secretsfs/pkg/secretsfs"
 	"github.com/muryoutaisuu/secretsfs/pkg/store"
@@ -37,7 +38,7 @@ func main() {
 
 	// print default configs, --print-defaults
 	if *defaults {
-		fmt.Printf(GetStringConfigDefaults())
+		fmt.Printf(config.GetStringConfigDefaults())
 		os.Exit(0)
 	}
 

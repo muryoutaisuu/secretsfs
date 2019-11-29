@@ -1,7 +1,7 @@
 // config contains the config information about secretsfs.
 // it contains the default configuration, so that it can be accessed and set
 // without any worries.
-package main
+package config
 
 import (
 	"bytes"
