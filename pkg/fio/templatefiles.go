@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"strings"
 	"text/template"
 
 	sfsh "github.com/muryoutaisuu/secretsfs/pkg/sfshelpers"
@@ -35,7 +34,7 @@ type FIOTemplatefiles struct {
 type secret struct {
 	flags   uint32
 	context *fuse.Context
-	t       *FIOTemplatefiles
+	//t       *FIOTemplatefiles
 }
 
 // GetAttr implements fuse.GetAttr
@@ -72,9 +71,18 @@ func (t *FIOTemplatefiles) GetAttr(name string, context *fuse.Context) (*fuse.At
 			Mode: fuse.S_IFDIR | 0550,
 		}, fuse.OK
 	case mode.IsRegular():
+		// get filepath to templates
+		filepath := t.getCorrectPath(name)
+		logger.WithFields(log.Fields{"filepath": filepath}).Debug("log values")
+		var flags uint32 = 0
+		content, err := renderTemplatefile(filepath, flags, context)
+		if err != nil {
+			logger.Error(err)
+			return nil, fuse.ENOENT
+		}
 		return &fuse.Attr{
 			Mode: fuse.S_IFREG | 0550,
-			Size: uint64(len(name)),
+			Size: uint64(len(content)),
 		}, fuse.OK
 	}
 
@@ -133,19 +141,30 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 
 	// get filepath to templates
 	filepath := t.getCorrectPath(name)
+	logger.WithFields(log.Fields{"filepath": filepath}).Debug("log values")
 
+	content, err := renderTemplatefile(filepath, flags, context)
+
+	//logger.WithFields(log.Fields{"isReg": file.Mode().IsRegular()}).Debug("logging values")
+	logger.Debug("returning Bytes and fuse.OK")
+	logger.WithFields(log.Fields{"content": content}).Debug("log values")
+	datafile := nodefs.NewDataFile(content)
+	return datafile, fuse.OK
+}
+
+func renderTemplatefile(filepath string, flags uint32, context *fuse.Context) ([]byte, error) {
 	// check whether filepath exists
 	file, err := os.Stat(filepath)
 	if err != nil {
 		logger.Error(err)
-		return nil, fuse.ENOENT
+		return nil, errors.New(fmt.Sprintf("Got an error for os.Stat(%s)", filepath))
 	}
 
 	// check whether filepath is a file
 	// https://stackoverflow.com/questions/8824571/golang-determining-whether-file-points-to-file-or-directory
 	if !file.Mode().IsRegular() {
 		logger.WithFields(log.Fields{"filepath": filepath}).Error("not a directory")
-		return nil, fuse.EISDIR
+		return nil, errors.New(fmt.Sprintf("%s is not a directory", filepath))
 	}
 
 	filename := path.Base(filepath)
@@ -154,7 +173,7 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 	if err != nil {
 		errs := err.Error()
 		logger.Error(errs)
-		return nil, fuse.EREMOTEIO
+		return nil, errors.New(fmt.Sprintf("Got an error while getting template for filepath=%s filename=%s", filepath, filename))
 	}
 
 	// https://gowalker.org/text/template#Template_Execute
@@ -162,24 +181,18 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 	// https://gowalker.org/bytes#Buffer_Bytes
 	// https://stackoverflow.com/questions/23454940/getting-bytes-buffer-does-not-implement-io-writer-error-message
 	var buf bytes.Buffer
-	secret := secret{
+	thesecret := secret{
 		flags:   flags,
 		context: context,
-		t:       t,
 	}
 
-	err = parser.Execute(&buf, secret)
+	logger.WithFields(log.Fields{"err": err, "buffer": buf}).Debug("before executing parser")
+	err = parser.Execute(&buf, thesecret)
+	logger.WithFields(log.Fields{"err": err, "buffer": buf}).Debug("after executing parser")
 	if err != nil {
 		logger.Error(err)
-		switch {
-		case strings.Contains(err.Error(), fmt.Sprint(fuse.EACCES)):
-			return nil, fuse.EACCES
-		default:
-			return nil, fuse.EREMOTEIO
-		}
 	}
-
-	return nodefs.NewDataFile(buf.Bytes()), fuse.OK
+	return buf.Bytes(), err
 }
 
 // FIOPath returns name of implemented FIO plugin
@@ -202,6 +215,7 @@ func (t *FIOTemplatefiles) getCorrectPath(name string) string {
 func (s secret) Get(filepath string) (string, error) {
 	sto := store.GetStore()
 	content, status := sto.Open(filepath, s.flags, s.context)
+	logger.WithFields(log.Fields{"filepath": filepath, "content": content}).Debug("log values")
 	if status != fuse.OK {
 		logger.WithFields(log.Fields{"fuse.Status": status}).Error("encountered error while loading secret from store")
 		//return "", errors.New("There was an error while loading Secret from store, fuse.Status="+fmt.Sprint(status))

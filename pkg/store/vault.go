@@ -177,6 +177,7 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 		if ok != true {
 			return "", fuse.EIO
 		}
+		logger.Debug("returning data and fuse.OK")
 		return data, fuse.OK
 	}
 	return "", fuse.ENOENT
