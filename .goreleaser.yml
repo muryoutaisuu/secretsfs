@@ -43,9 +43,6 @@ nfpms:
       "example/secretsfs-rsyslog.conf": "/etc/rsyslog.d/secretsfs.conf"
     config_files:
       "example/secretsfs.yaml": "/etc/secretsfs/secretsfs.yaml"
-    empty_folders:
-      - /etc/secretsfs
-      - /etc/secretsfs/templates
     overrides:
       rpm:
         replacements:
