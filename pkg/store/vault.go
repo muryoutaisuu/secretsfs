@@ -172,7 +172,6 @@ func (v *Vault) Open(name string, flags uint32, context *fuse.Context) (string, 
 		}
 		logger.WithFields(log.Fields{"variable": "name", "value": name}).Debug("after substituting")
 
-		logger.WithFields(log.Fields{"s[CValue]": s[CValue]}).Debug("log values")
 		data, ok := s[CValue].Data[name].(string)
 		if ok != true {
 			return "", fuse.EIO
@@ -205,8 +204,6 @@ func (v *Vault) setToken(context *fuse.Context) error {
 		return err
 	}
 	v.client.SetToken(a.Auth.ClientToken)
-	// TODO: Remove this debug line, not secure!!
-	logger.WithFields(log.Fields{"token": v.client.Token()}).Debug("log values")
 	return nil
 }
 
@@ -223,13 +220,11 @@ func (v *Vault) getAccessToken(u *user.User) (*api.Secret, error) {
 	postdata := map[string]interface{}{
 		"role_id": auth,
 	}
-	logger.WithFields(log.Fields{"login_payload": postdata}).Debug("authenticating")
 	resp, err := v.client.Logical().Write("auth/approle/login", postdata)
 	if err != nil {
 		logger.Error("got an error while authenticating")
 		return nil, err
 	}
-	logger.WithFields(log.Fields{"resp": resp, "resp.Data": resp.Data, "ClientToken": resp.Auth.ClientToken}).Debug("log values")
 	if resp.Auth == nil {
 		return resp, errors.New("no auth info returned")
 	}
@@ -258,16 +253,13 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 		logger.WithFields(log.Fields{"secret": s, "error": err}).Error("got an error in listDirNames")
 		return nil, errors.New("Got an error in listDirNames")
 	}
-	logger.WithFields(log.Fields{"secret": s}).Debug("log values")
 	dirs := []fuse.DirEntry{}
-	logger.WithFields(log.Fields{"dirs": dirs}).Debug("log values")
 	for i := 0; i < len(s); i++ {
 		d := fuse.DirEntry{
 			Name: path.Base(s[i]),
 			Mode: fuse.S_IFREG,
 		}
 		dirs = append(dirs, d)
-		logger.WithFields(log.Fields{"dirs": dirs}).Debug("log values")
 	}
 	return &dirs, nil
 }
@@ -277,7 +269,7 @@ func (v *Vault) listDir(name string) (*[]fuse.DirEntry, error) {
 func (v *Vault) listDirNames(name string) ([]string, error) {
 	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name}).Debug("listing directory in vault")
 	s, err := v.client.Logical().List(MTDATA + name + "/")
-	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name, "secret": s}).Debug("log values")
+	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name}).Debug("log values")
 
 	// can't list in vault
 	if err != nil || s == nil {
@@ -353,7 +345,6 @@ func (v *Vault) listFileNames(name string) ([]string, error) {
 		}
 		return nil, err
 	}
-	logger.WithFields(log.Fields{"secret": s, "secret.Data": s.Data}).Debug("log values")
 
 	filenames := []string{}
 	for k := range s.Data {
@@ -417,13 +408,13 @@ func (v *Vault) getTypes(name string) (map[Filetype]*api.Secret, map[Filetype]bo
 
 	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name}).Debug("listing directory in vault")
 	s, err := v.client.Logical().List(MTDATA + name + "/")
-	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name, "secret": s, "error": err}).Debug("after listing directory in vault")
+	logger.WithFields(log.Fields{"url": v.client.Address() + MTDATA + name, "error": err}).Debug("after listing directory in vault")
 	r[CTrueDir] = err == nil && s != nil
 	rs[CTrueDir] = s
 
 	logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name}).Debug("reading secret in vault")
 	s, err = v.client.Logical().Read(DTDATA + name)
-	logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name, "secret": s, "error": err}).Debug("after reading secret in vault")
+	logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name, "error": err}).Debug("after reading secret in vault")
 	r[CFile] = err == nil && s != nil
 	rs[CFile] = s
 
@@ -440,7 +431,7 @@ func (v *Vault) getTypes(name string) (map[Filetype]*api.Secret, map[Filetype]bo
 		name = path.Dir(name) // clip last element
 		logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name}).Debug("reading secret in vault")
 		s, err = v.client.Logical().Read(DTDATA + name)
-		logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name, "secret": s, "error": err}).Debug("after reading secret in vault")
+		logger.WithFields(log.Fields{"url": v.client.Address() + DTDATA + name, "error": err}).Debug("after reading secret in vault")
 		r[CValue] = err == nil && s != nil
 		rs[CValue] = s
 	} else {

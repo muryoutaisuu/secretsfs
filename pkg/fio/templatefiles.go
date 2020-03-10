@@ -145,9 +145,7 @@ func (t *FIOTemplatefiles) Open(name string, flags uint32, context *fuse.Context
 
 	content, err := renderTemplatefile(filepath, flags, context)
 
-	//logger.WithFields(log.Fields{"isReg": file.Mode().IsRegular()}).Debug("logging values")
 	logger.Debug("returning Bytes and fuse.OK")
-	logger.WithFields(log.Fields{"content": content}).Debug("log values")
 	datafile := nodefs.NewDataFile(content)
 	return datafile, fuse.OK
 }
@@ -186,9 +184,7 @@ func renderTemplatefile(filepath string, flags uint32, context *fuse.Context) ([
 		context: context,
 	}
 
-	logger.WithFields(log.Fields{"err": err, "buffer": buf}).Debug("before executing parser")
 	err = parser.Execute(&buf, thesecret)
-	logger.WithFields(log.Fields{"err": err, "buffer": buf}).Debug("after executing parser")
 	if err != nil {
 		logger.Error(err)
 	}
@@ -204,9 +200,6 @@ func (t *FIOTemplatefiles) FIOPath() string {
 // filesytem
 func (t *FIOTemplatefiles) getCorrectPath(name string) string {
 	return t.templpath + name
-	//filepath := viper.GetString("fio.templatefiles.templatespath")+name
-	//logger.WithFields(log.Fields{"filepath":filepath}).Debug("log values")
-	//return filepath
 }
 
 // Get is the function that will be called from inside of the templatefile.
@@ -215,7 +208,6 @@ func (t *FIOTemplatefiles) getCorrectPath(name string) string {
 func (s secret) Get(filepath string) (string, error) {
 	sto := store.GetStore()
 	content, status := sto.Open(filepath, s.flags, s.context)
-	logger.WithFields(log.Fields{"filepath": filepath, "content": content}).Debug("log values")
 	if status != fuse.OK {
 		logger.WithFields(log.Fields{"fuse.Status": status}).Error("encountered error while loading secret from store")
 		//return "", errors.New("There was an error while loading Secret from store, fuse.Status="+fmt.Sprint(status))
