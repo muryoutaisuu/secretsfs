@@ -33,10 +33,16 @@ nfpms:
     description: Access your secrets like passwords without a client directly from your filesystem with a simple cat call!
     formats:
       - rpm
+    empty_folders:
+      - /secretsfs
+      - /etc/secretsfs
+      - /etc/secretsfs/templates
     files:
       "example/secretsfs-logrotate.conf": "/etc/logrotate.d/secretsfs"
       "example/secretsfs.service": "/etc/systemd/system/secretsfs.service"
       "example/secretsfs-rsyslog.conf": "/etc/rsyslog.d/secretsfs.conf"
+    config_files:
+      "example/secretsfs.yaml": "/etc/secretsfs/secretsfs.yaml"
     empty_folders:
       - /etc/secretsfs
       - /etc/secretsfs/templates
