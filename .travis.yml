@@ -2,7 +2,7 @@
 language: go
 
 go:
-  - "1.13.x"
+  - "1.15.x"
 
 addons:
   apt:
@@ -11,7 +11,7 @@ addons:
 
 env:
   matrix:
-    - OS_TYPE=centos OS_VERSION=7
+    - OS_TYPE=centos OS_VERSION=8
 
 deploy:
   - provider: script
