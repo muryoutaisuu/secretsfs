@@ -13,6 +13,8 @@ archives:
     - 'README.md'
     - 'example/*'
     - 'docs/*'
+    - 'LICENSE'
+    - 'THIRDPARTYLICENSES'
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -23,9 +25,12 @@ changelog:
     exclude:
     - '^docs:'
     - '^test:'
+source:
+  enabled: true
+  format: 'tar.gz'
 nfpms:
   - id: secretsfs
-    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
     vendor: https://github.com/muryoutaisuu
     homepage: https://github.com/muryoutaisuu/secretsfs
     license: MIT License
@@ -33,6 +38,7 @@ nfpms:
     description: Access your secrets like passwords without a client directly from your filesystem with a simple cat call!
     formats:
       - rpm
+      - deb
     empty_folders:
       - /secretsfs
       - /etc/secretsfs
@@ -43,8 +49,5 @@ nfpms:
       "example/secretsfs-rsyslog.conf": "/etc/rsyslog.d/secretsfs.conf"
     config_files:
       "example/secretsfs.yaml": "/etc/secretsfs/secretsfs.yaml"
-    overrides:
-      rpm:
-        replacements:
-          amd64: "x86_64"
-        file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
+    replacements:
+      amd64: "x86_64"
