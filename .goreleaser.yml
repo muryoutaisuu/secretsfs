@@ -25,10 +25,10 @@ changelog:
     - '^test:'
 nfpms:
   - id: secretsfs
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     vendor: https://github.com/muryoutaisuu
     homepage: https://github.com/muryoutaisuu/secretsfs
-    license: New BSD License
+    license: MIT License
     maintainer: https://github.com/muryoutaisuu
     description: Access your secrets like passwords without a client directly from your filesystem with a simple cat call!
     formats:
@@ -47,4 +47,4 @@ nfpms:
       rpm:
         replacements:
           amd64: "x86_64"
-        name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
+        file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
