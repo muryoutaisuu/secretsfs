@@ -17,6 +17,3 @@ sourceit
 *.swp
 dist/
 site/
-
-# custom go thingies
-go.sum
