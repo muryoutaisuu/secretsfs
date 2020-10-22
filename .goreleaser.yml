@@ -51,3 +51,8 @@ nfpms:
       "example/secretsfs.yaml": "/etc/secretsfs/secretsfs.yaml"
     replacements:
       amd64: "x86_64"
+release:
+  github:
+    owner: 'muryoutaisuu'
+    name: 'secretsfs'
+  prerelease: auto
