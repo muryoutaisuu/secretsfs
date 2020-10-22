@@ -25,9 +25,6 @@ changelog:
     exclude:
     - '^docs:'
     - '^test:'
-source:
-  enabled: true
-  format: 'tar.gz'
 nfpms:
   - id: secretsfs
     file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
