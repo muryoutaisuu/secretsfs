@@ -1,12 +1,9 @@
 package store
 
 import (
-	"os/user"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
-
-	"github.com/muryoutaisuu/secretsfs/pkg/sfslog"
+	"context"
+	//"github.com/hanwen/go-fuse/v2/fs"
+	//"github.com/hanwen/go-fuse/v2/fuse"
 )
 
 // store contains the registered Store
@@ -15,21 +12,9 @@ var store Store
 // available stores
 var stores []string
 
-// logging
-var logger = log.NewEntry(log.StandardLogger())
-
 // GetStore returns currently active Store Implementation
-func GetStore() Store {
-	return store
-}
-
-// RegisterStore registers available stores
-// if a store is also set to be the backend store it will be set here
-func RegisterStore(s Store) {
-	stores = append(stores, s.String())
-	if viper.GetString("store.enabled") == s.String() {
-		store = s
-	}
+func GetStore() *Store {
+	return &store
 }
 
 // GetStores returns all registered stores.
@@ -39,8 +24,25 @@ func GetStores() []string {
 	return stores
 }
 
-func defaultEntry(name string, user *user.User) *log.Entry {
-	return sfslog.DefaultEntry(name, user)
+// RegisterStore registers available stores
+// if a store is also set to be the backend store it will be set here
+func RegisterStore(s Store) {
+	stores = append(stores, s.String())
+	if s.String() == "vault_kv" {
+		store = s
+	}
+	//if viper.GetString("store.enabled") == s.String() {
+	//	store = s
+	//}
+}
+
+// Store interface describes functions a new store should implement.
+type Store interface {
+	// for convenience
+	GetSecret(spath string, ctx context.Context) (secret *Secret, err error)
+
+	// String() is used to distinguish between different store implementations
+	String() string
 }
 
 func init() {

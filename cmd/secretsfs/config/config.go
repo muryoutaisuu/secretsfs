@@ -24,32 +24,31 @@ general:
       #- $HOME/.secretsfs
     #configfile: secretsfs  # without file type
 
-  # logging levels may be: {debug,info,warn,error}
+  # logging levels may be: {trace,debug,info,warn,error,fatal,panic}
   logging:
     level: info
-
-  # fuse does not allow the character '/' inside of names of directories or files
-  # in vault k=v pairs of one secret will be shown as files, where k is the name
-  # of the file and v the value. k may also include names with a '/'.
-  # Those slashes will be substituted with the following character
-  # may also use some special characters, e.g. '§' or '°'
-  substchar: _
-
-# TLS Configurations
-tls:
-  #cacert: <path to PEM-encoded CA file>
-  #capath: <path to directory of PEM-encoded CA files>
-  #clientcert: <path to certificate for backend communication>
-  #clientkey: <path to private key for backend communication>
-  #tlsservername: <used for setting SNI host>
-  #insecure: <disable TLS verification>
 
 fio:
   enabled:
     - secretsfiles
     - templatefiles
+    - internal
   templatefiles:
-    templatespath: /etc/secretsfs/templates/
+    # add additional locations for template files
+    # the files in '/etc/secretsfs/templates/' for example will be mapped to
+    # 'templatefiles/default/'
+    templatespaths:
+      default: /etc/secretsfs/templates/
+      #applA: /appl/applA
+  secretsfiles:
+  internal:
+    # privileges given to users or groups for listing and reading files in internal
+    # do not make this readable for all, as it may contain critical data due to path namings
+    privileges:
+      users:
+        - root
+      groups:
+        - admin
 
 store:
   enabled: vault
@@ -73,9 +72,15 @@ store:
     # defaults to a local dev instance
     addr: http://127.0.0.1:8200
 
-    # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
-    mtdata: secret/
-    dtdata: secret/
+    # vault TLS Configurations
+    # for more information, see https://pkg.go.dev/github.com/hashicorp/vault/api#TLSConfig
+    tls:
+      #cacert: <path to PEM-encoded CA file>
+      #capath: <path to directory of PEM-encoded CA files>
+      #clientcert: <path to certificate for backend communication>
+      #clientkey: <path to private key for backend communication>
+      #tlsservername: <used for setting SNI host>
+      #insecure: <disable TLS verification>
 `)
 
 // InitConfig reads all configurations and sets them.
@@ -108,8 +113,8 @@ func InitConfig() {
 		viper.SetConfigName(viper.GetString("general.configuration.configfile"))
 	}
 
-	//   add config paths of ENV var first so it overwrites any other config?
-	//   TODO: check, whether it really works like this
+	// add config paths of ENV var first so it overwrites any other config?
+	// TODO: check, whether it really works like this
 	viper.AddConfigPath("/etc/secretsfs/")
 	if viper.IsSet("general.configuration.paths") {
 		paths := viper.GetStringSlice("general.configuration.paths")

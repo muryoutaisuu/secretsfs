@@ -29,8 +29,8 @@ vault read auth/approle/role/root/role-id
 echo -n "type in roleid: "
 read ROLEID
 export ROLEID
-echo "$ROLEID" > /root/.vault-roleid
-#echo "$ROLEID" > /home/muryoutaisuu/.vault-roleid
+#echo "$ROLEID" > /root/.vault-roleid
+echo "$ROLEID" > /home/fiorettin/.vault-roleid
 echo "export ROLEID=$ROLEID" >> sourceit
 
 # login with roleid to check whether everything works as intended and also save accesstoken as roletoken

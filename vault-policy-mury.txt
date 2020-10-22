@@ -1,3 +1,8 @@
 path "secret/*" {
     capabilities = ["delete","create","update","list","read"]
 }
+
+path "sys/mounts"
+{
+  capabilities = ["read", "list"]
+}
