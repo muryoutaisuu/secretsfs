@@ -14,5 +14,5 @@ The fuse library logging is only enabled on logging levels `trace` and `debug`.
 general:
   # logging levels may be: {trace,debug,info,warn,error,fatal,panic}
   logging:
-    level: info
+    level: debug
 ```

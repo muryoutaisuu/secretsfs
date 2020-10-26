@@ -15,8 +15,8 @@ Store implementations are currently available for:
 
 FIO Implementations are currently the following:
 
-|    FIO name   |                                                             Purpose                                                             |  default |
-|:-------------:|:-------------------------------------------------------------------------------------------------------------------------------:|:--------:|
+| FIO name      | Purpose                                                                                                                         | default  |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------|----------|
 | secretsfiles  | To display secrets as is, just a file containing the secret.                                                                    | enabled  |
 | templatefiles | To display secrets rendered into a template, e.g. a configuration file. See configuration on how to configure and use this FIO. | enabled  |
 | internal      | To display some internal information of secretsfs, mostly used for debugging                                                    | enabled  |
