@@ -9,5 +9,7 @@ repo_url: https://github.com/muryoutaisuu/secretsfs
 nav:
   - Home: 'index.md'
   - 'Getting Started': 'getting-started.md'
-  - 'Examples': 'examples.md'
+  - 'Implementations': 'implementations.md'
+  - 'Configuration': 'configuration.md'
+  - 'Troubleshooting': 'troubleshooting.md'
   - 'Known Issues': 'known-issues.md'

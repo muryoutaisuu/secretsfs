@@ -9,5 +9,7 @@ Output formats _File Input/Output_ (FIO) are treated like plugins and can be (de
 
 * **secretsfiles:** returns plain secret on a simple `cat`
 * **templatefiles:** returns on `cat` a with secrets rendered file (e.g. a configuration file with secrets)
+* **internal:** mostly used for checking the state of _secretsfs_ and debugging
+* **tests:** disabled by default, mostly used for unit testing
 
 Get it now on [GitHub](https://github.com/muryoutaisuu/secretsfs)!

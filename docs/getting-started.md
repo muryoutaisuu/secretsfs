@@ -38,13 +38,13 @@ go get ./...                                        # get dependencies
 go install ./cmd/secretsfs                          # install secretsfs
 ```
 
-## Just Copy the Binary
+## Binary
 
 For Linux x86_64, you may download the latest built binary from [the project's release page](https://github.com/muryoutaisuu/secretsfs/releases).
 
-## RPM Package
+## Packages
 
-For RHEL7, there is a prebuilt .rpm package, you may download from [the project's release page](https://github.com/muryoutaisuu/secretsfs/releases).
+There are prebuilt .rpm and .deb packages, you may download from [the project's release page](https://github.com/muryoutaisuu/secretsfs/releases).
 
 # Start *secretsfs*
 
@@ -58,4 +58,4 @@ systemctl start secretsfs
 systemctl enable secretsfs
 ```
 
-The Systemd definition also comes with your .rpm package installation.
+The Systemd definition also comes with your package installation.
