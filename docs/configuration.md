@@ -1,6 +1,4 @@
-In this section some examples are explained on how to use specific things.
-
-# Configuration
+# Configuration File
 
 The default configuration of secretsfs may be output with the command `./secretsfs --print-defaults` and returns the output described below.
 This output may be directly piped into the actual configuration file: `./secretsfs --print-defaults > /etc/secretsfs/secretsfs.yaml`.
@@ -16,39 +14,38 @@ general:
       #- $HOME/.secretsfs
     #configfile: secretsfs  # without file type
 
-  # logging levels may be: {debug,info,warn,error}
+  # logging levels may be: {trace,debug,info,warn,error,fatal,panic}
   logging:
     level: info
-
-  # fuse does not allow the character '/' inside of names of directories or files
-  # in vault k=v pairs of one secret will be shown as files, where k is the name
-  # of the file and v the value. k may also include names with a '/'.
-  # Those slashes will be substituted with the following character
-  # may also use some special characters, e.g. '§' or '°'
-  substchar: _
-
-# TLS Configurations
-tls:
-  #cacert: <path to PEM-encoded CA file>
-  #capath: <path to directory of PEM-encoded CA files>
-  #clientcert: <path to certificate for backend communication>
-  #clientkey: <path to private key for backend communication>
-  #tlsservername: <used for setting SNI host>
-  #insecure: <disable TLS verification>
 
 fio:
   enabled:
     - secretsfiles
     - templatefiles
+    - internal
   templatefiles:
-    templatespath: /etc/secretsfs/templates/
+    # add additional locations for template files
+    # the files in '/etc/secretsfs/templates/' for example will be mapped to
+    # 'templatefiles/default/'
+    templatespaths:
+      default: /etc/secretsfs/templates/
+      #applA: /appl/applA
+  secretsfiles:
+  internal:
+    # privileges given to users or groups for listing and reading files in internal
+    # do not make this readable for all, as it may contain critical data due to path namings
+    privileges:
+      users:
+        - root
+      groups:
+        - admin
 
 store:
   enabled: vault
   vault:
     roleid:
       # path configuration defines, where to look for the vault roleid token
-      # $HOME will be substituted with the users corresponding home directory
+      # $HOME will be substituted with the user's corresponding home directory
       # according to variable HomeDir in https://golang.org/pkg/os/user/#User
       # it *MUST* be uppcerase
       file: "$HOME/.vault-roleid"
@@ -65,21 +62,30 @@ store:
     # defaults to a local dev instance
     addr: http://127.0.0.1:8200
 
-    # taken from https://www.vaultproject.io/api/secret/kv/kv-v2.html
-    mtdata: secret/
-    dtdata: secret/
+    # vault TLS Configurations
+    # for more information, see https://pkg.go.dev/github.com/hashicorp/vault/api#TLSConfig
+    tls:
+      #cacert: <path to PEM-encoded CA file>
+      #capath: <path to directory of PEM-encoded CA files>
+      #clientcert: <path to certificate for backend communication>
+      #clientkey: <path to private key for backend communication>
+      #tlsservername: <used for setting SNI host>
+      #insecure: <disable TLS verification>
 ```
 
 # Templating
 
-The _TemplateFilesFIO_ works with a default directory, in which templatefiles are located and which is configurable in the configuration file via `fio.templatefiles.templatespath`.
+The _TemplateFiles FIO_ works with configurable directories in which templatefiles are placed as needed.
+The directories are configurable in the configuration file via `fio.templatefiles.templatespaths` and map paths from _secretsfs_ to other filesystems.
+The path of the secret in Vault can be copied from the _SecretsFiles FIO_ and includes the name of the used key of the secret.
+If the calling user has no permissions in vault to access at least one of the secrets in the templatefile, _TemplateFiles FIO_ will return an error.
 Secrets will be loaded from currently active store and are called inside of the template by following string:
 
 ```
 {{ .Get "<pathToSecret>" }}
 ```
 
-*__Note:__ The Quotes <"> around the `<pathToSecret>` are very important.
+*__Note:__ The Quotes '"' around the `<pathToSecret>` are very important.
 That is due to golang templating notation, so that the input will be validated as a string.
 If it is not quoted, the golang templating library will not validate the input as a string and hence secretsfs will return an error.*
 
