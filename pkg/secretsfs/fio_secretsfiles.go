@@ -66,7 +66,7 @@ func (sf *FIOSecretsFiles) Lookup(n *SfsNode, ctx context.Context, name string, 
 	sec, err := sto.GetSecret(fullname, ctx)
 	if err != nil {
 		log.WithFields(log.Fields{"calling": "sto.GetSecret(fullname, ctx)", "fullname": fullname, "error": err}).Error("got error while getting secret")
-		return nil, syscall.ENOENT
+		return nil, syscall.EPERM
 	}
 	prefixedfullname := sf.prefixPath(fullname)
 	log.WithFields(log.Fields{"inode": GetInode(prefixedfullname), "mode": sec.Mode}).Debug("log values")

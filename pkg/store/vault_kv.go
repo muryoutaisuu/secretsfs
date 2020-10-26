@@ -46,7 +46,7 @@ func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, err
 			"error":      err}).Error("got error while getting vault client")
 		return nil, err
 	}
-	t := vh.GetTypes(c, spath)
+	t := vh.GetTypes(c, KVMountPath+spath)
 
 	switch {
 	case t[vh.CPath], t[vh.CSecret]:
@@ -57,7 +57,7 @@ func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, err
 
 		// append keys as Subs, if type is CScret
 		if t[vh.CSecret] && appendSubs {
-			data, err := c.Read(spath)
+			data, err := c.Read(KVMountPath + spath)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"spath":         spath,
@@ -82,7 +82,7 @@ func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, err
 
 		// append Paths as Subs, if type is CPath
 		if t[vh.CPath] && appendSubs {
-			keys, err := c.List(spath)
+			keys, err := c.List(KVMountPath + spath)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"spath":       spath,
@@ -106,7 +106,7 @@ func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, err
 		return s, nil
 
 	case t[vh.CKey]:
-		content, err := vh.GetValueFromKey(c, spath)
+		content, err := vh.GetValueFromKey(c, KVMountPath+spath)
 		if err != nil {
 			return nil, err
 		}
