@@ -37,7 +37,7 @@ func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, err
 		"spath":      spath,
 		"appendSubs": appendSubs,
 		"username":   u.Username}).Info("User accessing a secret")
-	c, err := getClient(ctx)
+	c, err := GetClient(ctx)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"spath":      spath,
@@ -125,10 +125,10 @@ func (s *VaultKv) String() string {
 	return "vault_kv"
 }
 
-// getClient returns a postfinance vault client.
+// GetClient returns a postfinance vault client.
 // The context is used to detect the calling user and loading his vault
 // approleId
-func getClient(ctx context.Context) (*pfvault.Client, error) {
+func GetClient(ctx context.Context) (*pfvault.Client, error) {
 	// Get default vault client configuration
 	conf := api.DefaultConfig()
 	a := viper.GetString("store.vault.addr")

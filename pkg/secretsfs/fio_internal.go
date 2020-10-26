@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	fh "github.com/muryoutaisuu/secretsfs/pkg/fusehelpers"
+	"github.com/muryoutaisuu/secretsfs/pkg/store"
 
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
@@ -42,6 +43,8 @@ var internalnodes = internalNodes{
 		&internalNode{"/internal/inodes", true, true, 0750, prettyprintInodes},
 		&internalNode{"/internal/user", true, false, 0755, prettyprintUser},
 		&internalNode{"/internal/privileged", true, false, 0755, prettyprintIsPrivileged},
+		&internalNode{"/internal/store", false, false, 0755, nil},
+		&internalNode{"/internal/store/vault_kv", true, true, 0750, prettyprintVault},
 	},
 }
 
@@ -64,6 +67,21 @@ func prettyprintUser(ctx context.Context) []byte {
 
 func prettyprintIsPrivileged(ctx context.Context) []byte {
 	return []byte(fmt.Sprintf("%v\n", isPrivileged(ctx)))
+}
+
+func prettyprintVault(ctx context.Context) []byte {
+	if s := *store.GetStore(); s.String() != "vault_kv" {
+		return []byte(fmt.Sprintf("vault is not the configured store, currently configured store: \"%v\"\n", s.String()))
+	}
+	pfvc, err := store.GetClient(ctx)
+	if err != nil {
+		return []byte(fmt.Sprintf("got error while calling store.GetClient(ctx), err=\"%v\"\n", err))
+	}
+	content, err := PrettyPrint(pfvc)
+	if err != nil {
+		return []byte(fmt.Sprintf("got error on prettyprinting, err=\"%v\"\n", err))
+	}
+	return content
 }
 
 func (t *internalNodes) isDir(npath string) bool {
