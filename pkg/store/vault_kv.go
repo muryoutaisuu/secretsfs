@@ -236,7 +236,16 @@ func getApproleId(u *user.User) (authToken string, err error) {
 }
 
 func finIdPath(u *user.User) (spath string) {
-	return strings.Replace(viper.GetString("store.vault.roleid.file"), "$HOME", u.HomeDir, 1)
+	spath = viper.GetString("store.vault.roleid.file")
+	overriddenusers := viper.GetStringMapString("store.vault.roleid.useroverride")
+	log.WithFields(log.Fields{
+		"user":           u,
+		"username":       u.Name,
+		"overridenusers": overriddenusers}).Debug("log values")
+	if newpath, ok := overriddenusers[u.Name]; ok {
+		spath = newpath
+	}
+	return strings.Replace(spath, "$HOME", u.HomeDir, 1)
 }
 
 func VaultApproleLogin(c *api.Client, approleId string) (accessToken string, err error) {
