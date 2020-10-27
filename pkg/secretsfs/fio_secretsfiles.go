@@ -3,6 +3,7 @@ package secretsfs
 import (
 	"context"
 	"path/filepath"
+	"strconv"
 	"syscall"
 
 	"github.com/hanwen/go-fuse/v2/fs"
@@ -27,7 +28,7 @@ func (sf *FIOSecretsFiles) Readdir(n *SfsNode, ctx context.Context) (out fs.DirS
 		return nil, syscall.ENOENT
 	}
 	if sec.Mode != fuse.S_IFDIR {
-		log.WithFields(log.Fields{"secpath": secpath, "secret": sec, "sec.Mode": sec.Mode}).Debug("secret is not a directory type")
+		log.WithFields(log.Fields{"secpath": secpath, "secret": sec, "sec.Mode": strconv.FormatInt(int64(sec.Mode), 16)}).Debug("secret is not a directory type")
 		return nil, syscall.ENOTDIR
 	}
 
@@ -38,7 +39,7 @@ func (sf *FIOSecretsFiles) Readdir(n *SfsNode, ctx context.Context) (out fs.DirS
 		fixedpath := sf.prefixPath(v.Path)
 		log.WithFields(log.Fields{
 			"v.Path":    v.Path,
-			"v.Mode":    v.Mode,
+			"v.Mode":    strconv.FormatInt(int64(v.Mode), 16),
 			"fixedpath": fixedpath,
 			"Name":      filepath.Base(fixedpath),
 			"Ino":       GetInode(fixedpath)}).Trace("logging subs")
@@ -65,11 +66,18 @@ func (sf *FIOSecretsFiles) Lookup(n *SfsNode, ctx context.Context, name string, 
 	fullname := filepath.Join(secpath, name)
 	sec, err := sto.GetSecret(fullname, ctx)
 	if err != nil {
-		log.WithFields(log.Fields{"calling": "sto.GetSecret(fullname, ctx)", "fullname": fullname, "error": err}).Error("got error while getting secret")
-		return nil, syscall.EPERM
+		log.WithFields(log.Fields{
+			"calling":  "sto.GetSecret(fullname, ctx)",
+			"fullname": fullname,
+			"n":        n,
+			"n.npath":  n.npath,
+			"name":     name,
+			"error":    err}).Warn("got error while getting secret, probably not enough permissions")
+		//return nil, syscall.EPERM
+		sec = &store.Secret{Path: fullname, Mode: fuse.S_IFDIR, Content: "", Subs: nil}
 	}
 	prefixedfullname := sf.prefixPath(fullname)
-	log.WithFields(log.Fields{"inode": GetInode(prefixedfullname), "mode": sec.Mode}).Debug("log values")
+	log.WithFields(log.Fields{"inode": GetInode(prefixedfullname), "mode": strconv.FormatInt(int64(sec.Mode), 16)}).Debug("log values")
 
 	// if true, then get an inode for it
 	stable := fs.StableAttr{
@@ -118,10 +126,16 @@ func (sf *FIOSecretsFiles) Getattr(n *SfsNode, ctx context.Context, fh fs.FileHa
 	_, secpath := rootName(n.npath)
 	sec, err := sto.GetSecret(secpath, ctx)
 	if err != nil {
-		log.WithFields(log.Fields{"calling": "sto.GetSecret(secpath, ctx)", "secpath": secpath, "error": err}).Error("got error while getting secret")
-		return syscall.ENOENT
+		log.WithFields(log.Fields{
+			"calling": "sto.GetSecret(secpath, ctx)",
+			"secpath": secpath,
+			"n":       n,
+			"n.npath": n.npath,
+			"error":   err}).Warn("got error while getting secret, probably not enough permissions")
+		sec = &store.Secret{Path: secpath, Mode: fuse.S_IFDIR + 0x0700, Content: "", Subs: nil}
+		//return syscall.ENOENT
 	}
-	log.WithFields(log.Fields{"inode": GetInode(n.npath), "Mode": sec.Mode}).Debug("log values")
+	log.WithFields(log.Fields{"inode": GetInode(n.npath), "Mode": strconv.FormatInt(int64(sec.Mode), 16)}).Debug("log values")
 
 	if sec.Mode == fuse.S_IFREG {
 		out.Size = uint64(len(sec.Content))
