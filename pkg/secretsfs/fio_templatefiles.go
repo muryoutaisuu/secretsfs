@@ -13,15 +13,12 @@ import (
 	"github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/muryoutaisuu/secretsfs/pkg/store"
 )
 
-var TEMPLATESPATHS map[string]string = map[string]string{
-	"default": "/etc/secretsfs/templates",
-	"applA":   "/appl/applA",
-	"applB":   "/appl/applB",
-}
+var TEMPLATESPATHS map[string]string
 
 // secret will be used to call the stores implementation of all the needed FUSE-
 // operations together with the provided flags and fuse.Context.
@@ -271,10 +268,15 @@ func renderTemplatefile(tpath string, context *context.Context) ([]byte, error) 
 	return buf.Bytes(), err
 }
 
+func generateTemplatesPaths() {
+	TEMPLATESPATHS = viper.GetStringMapString("fio.templatefiles.templatespaths")
+}
+
 func init() {
 	fioroot := FIOTemplateFiles{}
 	fm := FIOMap{
 		Root: &fioroot,
 	}
 	RegisterRoot(&fm)
+	generateTemplatesPaths()
 }
