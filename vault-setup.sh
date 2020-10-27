@@ -15,9 +15,11 @@ export VAULT_TOKEN="$ROOT"
 echo "export ROOTTOKEN=$VAULT_TOKEN" >> sourceit
 
 # put some secrets into vault
-vault kv put secret/hello foo=world
-vault kv put secret/subdir/mury foo2=world2 bar2=natii
-vault kv put secret/hello2 my/bad/key=my/bad/value my_bad_key=my_bad_value mynormalkey=mynormalvalue "my key"="my value" "my second key"="my second value"
+vault kv put secret/myappl/hello foo=world
+vault kv put secret/myappl/subdir/mury foo2=world2 bar2=natii
+vault kv put secret/myappl/hello2 my/bad/key=my/bad/value my_bad_key=my_bad_value mynormalkey=mynormalvalue "my key"="my value" "my second key"="my second value"
+vault kv put secret/private/mysecret mykey=myvalue
+vault kv put secret/private/notalloweddir/notallowedsubdir/notallowedsecret mynotallowedkey=mynotallowedsecret
 
 # create a new approle called mury and allow it nearly everything
 vault auth enable approle
@@ -42,5 +44,9 @@ export ROLETOKEN
 echo "export ROLETOKEN=$ROLETOKEN" >> sourceit
 echo "export VAULT_TOKEN=$ROLETOKEN" >> sourceit
 vault kv list secret
-vault kv get secret/hello
-vault kv get secret/subdir/mury
+vault kv get secret/myappl/hello
+vault kv get secret/myappl/subdir/mury
+echo "now run:"
+echo "  . sourceit"
+echo "  echo \$ROLEID > /export/home/fiorettin/.vault-roleid"
+echo "  umount /mnt/secretsfs ; go build ./cmd/secretsfs/ && ./secretsfs /mnt/secretsfs -o allow_other > /tmp/secretsfs.log"

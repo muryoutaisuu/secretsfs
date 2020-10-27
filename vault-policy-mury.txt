@@ -1,5 +1,8 @@
-path "secret/*" {
-    capabilities = ["delete","create","update","list","read"]
+path "secret/data/myappl/*" {
+  capabilities = ["read"]
+}
+path "secret/metadata/*" {
+  capabilities = ["list"]
 }
 
 path "sys/mounts"
