@@ -242,7 +242,7 @@ func finIdPath(u *user.User) (spath string) {
 		"user":           u,
 		"username":       u.Name,
 		"overridenusers": overriddenusers}).Debug("log values")
-	if newpath, ok := overriddenusers[u.Name]; ok {
+	if newpath, ok := overriddenusers[u.Username]; ok {
 		spath = newpath
 	}
 	return strings.Replace(spath, "$HOME", u.HomeDir, 1)
