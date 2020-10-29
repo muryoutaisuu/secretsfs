@@ -20,8 +20,8 @@ var configDefaults = []byte(`
 general:
   configuration:
     paths:
-      #- /etc/secretsfs/
-      #- $HOME/.secretsfs
+    #- /etc/secretsfs/
+    #- $HOME/.secretsfs
     #configfile: secretsfs  # without file type
 
   # logging levels may be: {trace,debug,info,warn,error,fatal,panic}
