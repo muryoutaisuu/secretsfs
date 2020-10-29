@@ -45,6 +45,8 @@ var internalnodes = internalNodes{
 		&internalNode{"/internal/privileged", true, false, 0755, prettyprintIsPrivileged},
 		&internalNode{"/internal/store", false, false, 0755, nil},
 		&internalNode{"/internal/store/vault_kv", true, true, 0750, prettyprintVault},
+		&internalNode{"/internal/store/useroverrides", true, true, 0750, prettyprintUseroverrides},
+		&internalNode{"/internal/store/useroverride", true, false, 0755, prettyprintUseroverride},
 	},
 }
 
@@ -82,6 +84,22 @@ func prettyprintVault(ctx context.Context) []byte {
 		return []byte(fmt.Sprintf("got error on prettyprinting, err=\"%v\"\n", err))
 	}
 	return content
+}
+
+func prettyprintUseroverrides(ctx context.Context) []byte {
+	return []byte(fmt.Sprintf("%v\n", viper.GetStringMapString("store.vault.roleid.useroverride")))
+}
+func prettyprintUseroverride(ctx context.Context) []byte {
+	u, _ := fh.GetUserFromContext(ctx)
+	finalizedpath := store.FinIdPath(u)
+	ufinpath := struct {
+		username string
+		finpath  string
+	}{
+		u.Name,
+		finalizedpath,
+	}
+	return []byte(fmt.Sprintf("%v\n", ufinpath))
 }
 
 func (t *internalNodes) isDir(npath string) bool {

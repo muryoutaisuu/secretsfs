@@ -220,7 +220,7 @@ func configureTLS(c *api.Config) error {
 }
 
 func getApproleId(u *user.User) (authToken string, err error) {
-	spath := finIdPath(u)
+	spath := FinIdPath(u)
 	log.WithFields(log.Fields{
 		"username": u.Username,
 		"spath":    spath}).Debug("log values")
@@ -235,7 +235,7 @@ func getApproleId(u *user.User) (authToken string, err error) {
 	return strings.TrimSuffix(string(o), "\n"), nil
 }
 
-func finIdPath(u *user.User) (spath string) {
+func FinIdPath(u *user.User) (spath string) {
 	spath = viper.GetString("store.vault.roleid.file")
 	overriddenusers := viper.GetStringMapString("store.vault.roleid.useroverride")
 	log.WithFields(log.Fields{
