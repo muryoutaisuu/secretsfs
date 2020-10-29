@@ -9,12 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/hanwen/go-fuse/v2/fuse"
 	"github.com/hashicorp/vault/api"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	fh "github.com/muryoutaisuu/secretsfs/pkg/fusehelpers"
+	sfsfh "github.com/muryoutaisuu/secretsfs/pkg/fusehelpers"
 	vh "github.com/muryoutaisuu/vaulthelper"
 	pfvault "github.com/postfinance/vault/kv"
 )
@@ -32,7 +31,7 @@ func (s *VaultKv) GetSecret(spath string, ctx context.Context) (*Secret, error) 
 }
 
 func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, error) {
-	u, err := fh.GetUserFromContext(ctx)
+	u, err := sfsfh.GetUserFromContext(ctx)
 	log.WithFields(log.Fields{
 		"spath":      spath,
 		"appendSubs": appendSubs,
@@ -52,7 +51,7 @@ func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, err
 	case t[vh.CPath], t[vh.CSecret]:
 		s := &Secret{
 			Path: spath,
-			Mode: fuse.S_IFDIR,
+			Mode: sfsfh.DIRREAD,
 		}
 
 		// append keys as Subs, if type is CScret
@@ -73,7 +72,7 @@ func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, err
 				for k, _ := range data {
 					newsec := &Secret{
 						Path: filepath.Join(spath, k),
-						Mode: fuse.S_IFREG,
+						Mode: sfsfh.FILEREAD,
 					}
 					s.Subs = append(s.Subs, newsec)
 				}
@@ -97,7 +96,7 @@ func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, err
 				for _, v := range keys {
 					newsec := &Secret{
 						Path: filepath.Join(spath, v),
-						Mode: fuse.S_IFDIR,
+						Mode: sfsfh.DIRREAD,
 					}
 					s.Subs = append(s.Subs, newsec)
 				}
@@ -112,7 +111,7 @@ func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, err
 		}
 		return &Secret{
 			Path:    spath,
-			Mode:    fuse.S_IFREG,
+			Mode:    sfsfh.FILEREAD,
 			Content: content,
 		}, nil
 
@@ -149,7 +148,7 @@ func GetClient(ctx context.Context) (*pfvault.Client, error) {
 		return nil, err
 	}
 	// Get user doing the filesystem request
-	u, err := fh.GetUserFromContext(ctx)
+	u, err := sfsfh.GetUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/hanwen/go-fuse/v2/fuse"
 	log "github.com/sirupsen/logrus"
 
+	sfsfh "github.com/muryoutaisuu/secretsfs/pkg/fusehelpers" //SecretsFS FuseHelper
 	"github.com/muryoutaisuu/secretsfs/pkg/store"
 )
 
@@ -27,7 +28,7 @@ func (sf *FIOSecretsFiles) Readdir(n *SfsNode, ctx context.Context) (out fs.DirS
 		log.WithFields(log.Fields{"secpath": secpath, "error": err, "calling": "sto.GetSecret(secpath, ctx)"}).Error("Got error while getting secret")
 		return nil, syscall.ENOENT
 	}
-	if sec.Mode != fuse.S_IFDIR {
+	if !sfsfh.IsDir(sec.Mode) {
 		log.WithFields(log.Fields{"secpath": secpath, "secret": sec, "sec.Mode": strconv.FormatInt(int64(sec.Mode), 16)}).Debug("secret is not a directory type")
 		return nil, syscall.ENOTDIR
 	}
@@ -74,7 +75,7 @@ func (sf *FIOSecretsFiles) Lookup(n *SfsNode, ctx context.Context, name string, 
 			"name":     name,
 			"error":    err}).Warn("got error while getting secret, probably not enough permissions")
 		//return nil, syscall.EPERM
-		sec = &store.Secret{Path: fullname, Mode: fuse.S_IFDIR, Content: "", Subs: nil}
+		sec = &store.Secret{Path: fullname, Mode: sfsfh.DIRNOREAD, Content: "", Subs: nil}
 	}
 	prefixedfullname := sf.prefixPath(fullname)
 	log.WithFields(log.Fields{"inode": GetInode(prefixedfullname), "mode": strconv.FormatInt(int64(sec.Mode), 16)}).Debug("log values")
@@ -92,6 +93,10 @@ func (sf *FIOSecretsFiles) Lookup(n *SfsNode, ctx context.Context, name string, 
 }
 
 func (sf *FIOSecretsFiles) Open(n *SfsNode, ctx context.Context, flags uint32) (fh fs.FileHandle, fuseFlags uint32, errno syscall.Errno) {
+	log.WithFields(log.Fields{
+		"n":       n,
+		"n.npath": n.npath,
+		"flags":   strconv.FormatInt(int64(flags), 16)}).Debug("log values")
 	return nil, 0, 0
 }
 
@@ -132,12 +137,12 @@ func (sf *FIOSecretsFiles) Getattr(n *SfsNode, ctx context.Context, fh fs.FileHa
 			"n":       n,
 			"n.npath": n.npath,
 			"error":   err}).Warn("got error while getting secret, probably not enough permissions")
-		sec = &store.Secret{Path: secpath, Mode: fuse.S_IFDIR + 0x0700, Content: "", Subs: nil}
+		sec = &store.Secret{Path: secpath, Mode: sfsfh.FILENOREAD, Content: "", Subs: nil}
 		//return syscall.ENOENT
 	}
 	log.WithFields(log.Fields{"inode": GetInode(n.npath), "Mode": strconv.FormatInt(int64(sec.Mode), 16)}).Debug("log values")
 
-	if sec.Mode == fuse.S_IFREG {
+	if sfsfh.IsFile(sec.Mode) {
 		out.Size = uint64(len(sec.Content))
 	}
 	out.Ino = GetInode(n.npath)

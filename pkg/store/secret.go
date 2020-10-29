@@ -2,7 +2,7 @@ package store
 
 type Secret struct {
 	Path    string
-	Mode    int
+	Mode    int64
 	Content string
 	Subs    []*Secret
 }
