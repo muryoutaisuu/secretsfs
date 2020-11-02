@@ -18,6 +18,12 @@ import (
 	"github.com/muryoutaisuu/secretsfs/pkg/store"
 )
 
+var (
+	// Build Time injection
+	Version   string = ""
+	BuildDate string = ""
+)
+
 func main() {
 	// ARGUMENT THINGIES START
 	// parse flags and arguments
@@ -29,8 +35,15 @@ func main() {
 	var fios = flag.Bool("print-fios", false, "prints available FIOs")
 	var json = flag.Bool("log-json", false, "log in json format")
 	var fusedebug = flag.Bool("fuse-debug", false, "debug logging of fuse library")
+	var printversion = flag.Bool("version", false, "print version information")
 
 	flag.CommandLine.Parse(os.Args[firstDashedArg():])
+
+	if *printversion {
+		fmt.Printf("secretsfs version: %v\n", Version)
+		fmt.Printf("build date       : %v\n", BuildDate)
+		os.Exit(0)
+	}
 
 	// print default configs, --print-defaults
 	if *defaults {
