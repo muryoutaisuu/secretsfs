@@ -1,7 +1,8 @@
-[![Build Status](https://travis-ci.com/muryoutaisuu/secretsfs.svg?branch=master)](https://travis-ci.com/muryoutaisuu/secretsfs)
+![Build Status](https://github.com/muryoutaisuu/secretsfs/workflows/goreleaser/badge.svg?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/muryoutaisuu/secretsfs)](https://goreportcard.com/report/github.com/muryoutaisuu/secretsfs)
 [![Documentation Status](https://readthedocs.org/projects/secretsfs/badge/?version=latest)](https://secretsfs.readthedocs.io/en/latest/?badge=latest)
 [![GoDoc](https://godoc.org/github.com/muryoutaisuu/secretsfs?status.svg)](https://godoc.org/github.com/muryoutaisuu/secretsfs/pkg)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/muryoutaisuu/secretsfs)](https://pkg.go.dev/github.com/muryoutaisuu/secretsfs)
 
 * [GoDoc](https://godoc.org/github.com/muryoutaisuu/secretsfs/pkg)
 * [GoWalker](https://gowalker.org/github.com/muryoutaisuu/secretsfs/pkg)
@@ -23,4 +24,4 @@ Output formats (called FIO, stands for File Input/Output) are treated like plugi
 * **secretsfiles:** returns plain secret on a simple `cat`
 * **templatefiles:** returns on `cat` a with secrets rendered file (e.g. a configuration file with secrets)
 
-[Read the docs for more!](https://secretsfs.readthedocs.io/en/latest/)
+[Read the docs for more!](https://secretsfs.readthedocs.io/)
