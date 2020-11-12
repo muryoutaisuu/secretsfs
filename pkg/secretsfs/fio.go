@@ -86,7 +86,7 @@ func RootPathsEnabled() []string {
 // IsRootPath checks whether the given rootpath is registered and enabled in fiomaps
 func IsRootPath(rootpath string) bool {
 	if rootpath[:1] == "/" {
-		rootpath = rootpath[1:len(rootpath)]
+		rootpath = rootpath[1:]
 	}
 	for k, v := range fiomaps {
 		if rootpath == k {

@@ -69,7 +69,7 @@ func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, err
 					"data":          data,
 					"error":         err}).Warn("got error while getting vault secret with client and spath for adding as subs to store secret. Continuing...")
 			} else {
-				for k, _ := range data {
+				for k := range data {
 					newsec := &Secret{
 						Path: filepath.Join(spath, k),
 						Mode: sfsfh.FILEREAD,

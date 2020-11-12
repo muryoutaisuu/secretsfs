@@ -18,13 +18,13 @@ func TestGetDirEntries(t *testing.T) {
 	// t.Fatal("not implemented")
 	var testnodes = testNodes{
 		[]*testNode{
-			&testNode{"/tests", false, nil},
-			&testNode{"/tests/testdir", false, nil},
-			&testNode{"/tests/test1.txt", true, []byte("This is the content of the file /tests/test1.txt")},
-			&testNode{"/tests/test2.txt", true, []byte("This is the content of the file /tests/test2.txt")},
-			&testNode{"/tests/testdir/test3.txt", true, []byte("This is the content of the file /tests/testdir/test3.txt")},
-			&testNode{"/tests/testdir/test4.txt", true, []byte("This is the content of the file /tests/testdir/test4.txt")},
-			&testNode{"/tests/testdir/test5.txt", true, []byte("This is the content of the file /tests/testdir/test5.txt")},
+			{"/tests", false, nil},
+			{"/tests/testdir", false, nil},
+			{"/tests/test1.txt", true, []byte("This is the content of the file /tests/test1.txt")},
+			{"/tests/test2.txt", true, []byte("This is the content of the file /tests/test2.txt")},
+			{"/tests/testdir/test3.txt", true, []byte("This is the content of the file /tests/testdir/test3.txt")},
+			{"/tests/testdir/test4.txt", true, []byte("This is the content of the file /tests/testdir/test4.txt")},
+			{"/tests/testdir/test5.txt", true, []byte("This is the content of the file /tests/testdir/test5.txt")},
 		},
 	}
 	tables := []struct {

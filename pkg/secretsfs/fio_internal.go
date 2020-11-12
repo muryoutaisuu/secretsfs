@@ -39,14 +39,14 @@ type internalNodes struct {
 
 var internalnodes = internalNodes{
 	[]*internalNode{
-		&internalNode{"/internal", false, false, 0755, nil},
-		&internalNode{"/internal/inodes", true, true, 0750, prettyprintInodes},
-		&internalNode{"/internal/user", true, false, 0755, prettyprintUser},
-		&internalNode{"/internal/privileged", true, false, 0755, prettyprintIsPrivileged},
-		&internalNode{"/internal/store", false, false, 0755, nil},
-		&internalNode{"/internal/store/vault_kv", true, true, 0750, prettyprintVault},
-		&internalNode{"/internal/store/useroverrides", true, true, 0750, prettyprintUseroverrides},
-		&internalNode{"/internal/store/useroverride", true, false, 0755, prettyprintUseroverride},
+		{"/internal", false, false, 0755, nil},
+		{"/internal/inodes", true, true, 0750, prettyprintInodes},
+		{"/internal/user", true, false, 0755, prettyprintUser},
+		{"/internal/privileged", true, false, 0755, prettyprintIsPrivileged},
+		{"/internal/store", false, false, 0755, nil},
+		{"/internal/store/vault_kv", true, true, 0750, prettyprintVault},
+		{"/internal/store/useroverrides", true, true, 0750, prettyprintUseroverrides},
+		{"/internal/store/useroverride", true, false, 0755, prettyprintUseroverride},
 	},
 }
 

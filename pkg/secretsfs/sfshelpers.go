@@ -37,7 +37,7 @@ func GetInodeIfRegistered(npath string) (uint64, bool) {
 
 // trimPath removes '/' if it is the last character and returns resulting string
 func trimPath(npath string) string {
-	if npath[len(npath)-1:len(npath)] == "/" {
+	if npath[len(npath)-1:] == "/" {
 		npath = npath[:len(npath)-1]
 	}
 	return npath
@@ -49,7 +49,7 @@ func rootName(npath string) (rootpath, subpath string) {
 	if len(npath) == 0 || npath == "/" {
 		return "", ""
 	} else if npath[0:1] == "/" {
-		npath = npath[1:len(npath)]
+		npath = npath[1:]
 	}
 	list := strings.Split(npath, string(filepath.Separator))
 	rootpath = list[0]

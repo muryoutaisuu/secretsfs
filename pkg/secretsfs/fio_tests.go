@@ -32,13 +32,13 @@ type testNodes struct {
 
 var testnodes = testNodes{
 	[]*testNode{
-		&testNode{"/tests", false, nil},
-		&testNode{"/tests/testdir", false, nil},
-		&testNode{"/tests/test1.txt", true, []byte("This is the content of the file /tests/test1.txt\n")},
-		&testNode{"/tests/test2.txt", true, []byte("This is the content of the file /tests/test2.txt\n")},
-		&testNode{"/tests/testdir/test3.txt", true, []byte("This is the content of the file /tests/testdir/test3.txt\n")},
-		&testNode{"/tests/testdir/test4.txt", true, []byte("This is the content of the file /tests/testdir/test4.txt\n")},
-		&testNode{"/tests/testdir/test5.txt", true, []byte("This is the content of the file /tests/testdir/test5.txt\n")},
+		{"/tests", false, nil},
+		{"/tests/testdir", false, nil},
+		{"/tests/test1.txt", true, []byte("This is the content of the file /tests/test1.txt\n")},
+		{"/tests/test2.txt", true, []byte("This is the content of the file /tests/test2.txt\n")},
+		{"/tests/testdir/test3.txt", true, []byte("This is the content of the file /tests/testdir/test3.txt\n")},
+		{"/tests/testdir/test4.txt", true, []byte("This is the content of the file /tests/testdir/test4.txt\n")},
+		{"/tests/testdir/test5.txt", true, []byte("This is the content of the file /tests/testdir/test5.txt\n")},
 	},
 }
 
