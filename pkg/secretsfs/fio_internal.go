@@ -60,6 +60,9 @@ func prettyprintInodes(ctx context.Context) []byte {
 
 func prettyprintUser(ctx context.Context) []byte {
 	u, err := fh.GetUserFromContext(ctx)
+	if err != nil {
+		return []byte("got error while getting user from context")
+	}
 	content, err := PrettyPrint(u)
 	if err != nil {
 		return []byte(fmt.Sprintf("got error on prettyprinting, err=\"%v\"\n", err))

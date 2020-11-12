@@ -32,6 +32,13 @@ func (s *VaultKv) GetSecret(spath string, ctx context.Context) (*Secret, error) 
 
 func getSecret(spath string, ctx context.Context, appendSubs bool) (*Secret, error) {
 	u, err := sfsfh.GetUserFromContext(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"spath":      spath,
+			"appendSubs": appendSubs,
+			"error":      err}).Error("got error while getting user from context")
+		return nil, err
+	}
 	log.WithFields(log.Fields{
 		"spath":      spath,
 		"appendSubs": appendSubs,
