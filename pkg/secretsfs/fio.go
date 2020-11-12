@@ -21,7 +21,7 @@ var fiomaps map[string]*FIOMap = make(map[string]*FIOMap)
 // enabledFIOs contains all enabled fios due to configuration
 var enabledFIOs []string
 
-// FIORoot interace describes functions a new FIO plugin should implement.
+// FIORoot interface describes functions a new FIO plugin should implement.
 type FIORoot interface {
 	// Node Operations
 	Readdir(n *SfsNode, ctx context.Context) (out fs.DirStream, errno syscall.Errno)
