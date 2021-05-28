@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/viper"
 
 	sfsfh "github.com/muryoutaisuu/secretsfs/pkg/fusehelpers"
-	vh "github.com/muryoutaisuu/vaulthelper"
-	pfvault "github.com/postfinance/vault/kv"
+	vh "github.com/muryoutaisuu/vaulthelper/pkg"
+	pfvault "github.com/postfinance/vaultkv"
 )
 
 // kv mount path
