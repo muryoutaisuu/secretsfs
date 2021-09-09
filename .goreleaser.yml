@@ -43,12 +43,16 @@ nfpms:
       - /secretsfs
       - /etc/secretsfs
       - /etc/secretsfs/templates
-    files:
-      "example/secretsfs-logrotate.conf": "/etc/logrotate.d/secretsfs"
-      "example/secretsfs.service": "/etc/systemd/system/secretsfs.service"
-      "example/secretsfs-rsyslog.conf": "/etc/rsyslog.d/secretsfs.conf"
-    config_files:
-      "example/secretsfs.yaml": "/etc/secretsfs/secretsfs.yaml"
+    contents:
+      - src: example/secretsfs-logrotate.conf
+        dst: /etc/logrotate.d/secretsfs
+      - src: example/secretsfs.service
+        dst: /etc/systemd/system/secretsfs.service
+      - src: example/secretsfs-rsyslog.conf
+        dst: /etc/rsyslog.d/secretsfs.conf
+      - src: example/secretsfs.yaml
+        dst: /etc/secretsfs/secretsfs.yaml
+        type: "config|noreplace"
     replacements:
       amd64: "x86_64"
 release:
