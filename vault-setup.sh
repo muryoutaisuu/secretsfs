@@ -1,15 +1,16 @@
 # kill existing vault
+echo "killing old vault instance..."
 pkill vault
+sleep 1
 
 # start vault dev server & set ENV variables
+export VAULT_DEV_ROOT_TOKEN_ID="root"
 vault server -dev &
 export VAULT_ADDR='http://127.0.0.1:8200'
 echo export VAULT_ADDR='http://127.0.0.1:8200' > sourceit
 
 # read root token & set ENV variables
-sleep 1
-echo -n "type in root token: "
-read ROOT
+export ROOT="${VAULT_DEV_ROOT_TOKEN_ID}"
 export VAULT_TOKEN="$ROOT"
 #echo export VAULT_TOKEN="$ROOT" >> sourceit
 echo "export ROOTTOKEN=$VAULT_TOKEN" >> sourceit
@@ -28,19 +29,16 @@ vault write auth/approle/role/root policies=default,mury bind_secret_id=false to
 
 # get a approleid from approle mury & write it into corresponding files
 vault read auth/approle/role/root/role-id
-echo -n "type in roleid: "
-read ROLEID
-export ROLEID
+export ROLEID=$(vault read -format=json auth/approle/role/root/role-id | jq -r '.data.role_id')
 #echo "$ROLEID" > /root/.vault-roleid
 echo "$ROLEID" > /home/fiorettin/.vault-roleid
 echo "export ROLEID=$ROLEID" >> sourceit
 
 # login with roleid to check whether everything works as intended and also save accesstoken as roletoken
 # it's rather for showing, that get/put works with non-root approles!
-vault write auth/approle/login role_id=$ROLEID
-echo -n "type in root approle token:"
-read ROLETOKEN
-export ROLETOKEN
+login=$(vault write -format=json auth/approle/login role_id=$ROLEID)
+echo "$login"
+export ROLETOKEN=$(echo "$login" | jq -r '.auth.client_token')
 echo "export ROLETOKEN=$ROLETOKEN" >> sourceit
 echo "export VAULT_TOKEN=$ROLETOKEN" >> sourceit
 vault kv list secret
