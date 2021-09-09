@@ -12,8 +12,6 @@
 
 Subject to changes of ownership, api and code structure amongst other things...
 
-**Do not use yet!!!**
-
 # Purpose of *secretsfs*
 
 _secretsfs_ implements a FUSE-filesytem, that allows to interact with secrets stored in a backend (called store) via simple filesysten-interacting commands.
