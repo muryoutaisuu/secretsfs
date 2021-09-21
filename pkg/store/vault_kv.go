@@ -262,7 +262,7 @@ func VaultApproleLogin(c *api.Client, approleId string) (accessToken string, err
 	if err != nil {
 		return "", err
 	}
-	if resp.Auth == nil {
+	if resp == nil || resp.Auth == nil {
 		return "", errors.New("no auth info returned")
 	}
 	return resp.Auth.ClientToken, nil
