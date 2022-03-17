@@ -39,10 +39,6 @@ nfpms:
     formats:
       - rpm
       - deb
-    empty_folders:
-      - /secretsfs
-      - /etc/secretsfs
-      - /etc/secretsfs/templates
     contents:
       - src: example/secretsfs-logrotate.conf
         dst: /etc/logrotate.d/secretsfs
@@ -53,6 +49,12 @@ nfpms:
       - src: example/secretsfs.yaml
         dst: /etc/secretsfs/secretsfs.yaml
         type: "config|noreplace"
+      - dst: /secretsfs
+        type: 'dir'
+      - dst: /etc/secretsfs
+        type: 'dir'
+      - dst: /etc/secretsfs/templates
+        type: 'dir'
     replacements:
       amd64: "x86_64"
 release:
