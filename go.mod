@@ -17,7 +17,6 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/postfinance/vaultkv v0.0.4
 	github.com/sirupsen/logrus v1.9.0
-	github.com/spf13/viper v1.13.0
-	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
+	github.com/spf13/viper v1.14.0
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 )
