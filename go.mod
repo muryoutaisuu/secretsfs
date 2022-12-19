@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
-	github.com/hanwen/go-fuse/v2 v2.1.0
+	github.com/hanwen/go-fuse/v2 v2.2.0
 	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
 	github.com/hashicorp/go-secure-stdlib/mlock v0.1.2 // indirect
 	github.com/hashicorp/go-version v1.4.0 // indirect
