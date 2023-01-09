@@ -15,7 +15,7 @@ require (
 	github.com/muryoutaisuu/vaulthelper v1.1.3
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
-	github.com/postfinance/vaultkv v0.0.4
+	github.com/postfinance/vaultkv v0.0.5
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.14.0
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
